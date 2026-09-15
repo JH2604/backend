@@ -3,12 +3,11 @@ package main
 import (
 	"fmt"
 
+	"campus-lost-found/backend/handler"
+
 	"github.com/gin-gonic/gin"
 
-	"campus-lost-found/backend/errcode"
 	"campus-lost-found/backend/middleware"
-	"campus-lost-found/backend/models"
-	"campus-lost-found/backend/response"
 )
 
 func main() {
@@ -21,14 +20,7 @@ func main() {
 	r.Use(middleware.Counter())  // ③ 统计请求数
 	r.Use(middleware.OnlyGet())
 
-	r.GET("/api/items/1", func(c *gin.Context) {
-		item := models.Item{ID: 1, Name: "黑色雨伞", Type: "lost", Status: "pending"}
-		response.Success(c, item)
-	})
-
-	r.GET("/api/items/999", func(c *gin.Context) {
-		response.Fail(c, errcode.ErrNotFound)
-	})
+	r.GET("/api/items/1", handler.GetItem)
 
 	// 故意写一个会崩溃的接口，用来测试
 	r.GET("/api/crash", func(c *gin.Context) {
