@@ -20,7 +20,8 @@ func main() {
 	r.Use(middleware.Counter())  // ③ 统计请求数
 	r.Use(middleware.OnlyGet())
 
-	r.GET("/api/items/1", handler.GetItem)
+	r.GET("/api/items/:id", handler.GetItem)
+	r.GET("/api/items", handler.ListItems)
 
 	// 故意写一个会崩溃的接口，用来测试
 	r.GET("/api/crash", func(c *gin.Context) {
