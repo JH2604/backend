@@ -39,17 +39,29 @@ func GetItem(c *gin.Context) {
 }
 
 func ListItems(c *gin.Context) {
-	result,err := strconv.Atoi(c.Query("page"))
+	result, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil {
 		response.Fail(c, errcode.ErrInvalidParams)
 		return
 	}
-	extent,err := strconv.Atoi(c.Query("size"))
+	if result <= 0 {
+		response.Fail(c, errcode.ErrInvalidParams)
+		return
+
+	}
+	extent, err := strconv.Atoi(c.DefaultQuery("size", "10"))
 	if err != nil {
 		response.Fail(c, errcode.ErrInvalidParams)
 		return
 	}
 
+	if extent <= 0 {
+		response.Fail(c, errcode.ErrInvalidParams)
+		return
+	}
+	if extent > 50 {
+		extent = 50
+	}
 
 	category := c.Query("type")
 	news := make([]models.Item, 0)
@@ -60,8 +72,18 @@ func ListItems(c *gin.Context) {
 
 		}
 	}
-	
-	slice := news[(result-1)*extent : result*extent]
+	if len(news) <= (result-1)*extent {
+		new := make([]models.Item, 0)
+		response.Success(c, new)
+		return
+
+	}
+	end := result * extent // end是边界
+	if end > len(news) {
+		end = len(news)
+	}
+
+	slice := news[(result-1)*extent : end]
 
 	response.Success(c, slice)
 }
