@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gin-demo/internal/handler"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
