@@ -64,9 +64,8 @@ func main() {
 
 	r := gin.Default()
 
-	// 5. 发布帖子的接口（现在它要落库了）
-	r.POST("/api/v1/lost-item", func(c *gin.Context) {
-		var item LostItem
+	r.GET("/api/items/:id", handler.GetItem)
+	r.GET("/api/items", handler.ListItems)
 
 		if err := c.ShouldBindJSON(&item); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
