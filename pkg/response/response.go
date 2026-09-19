@@ -3,7 +3,7 @@ package response
 import (
 	"github.com/gin-gonic/gin"
 
-	"campus-lost-found/backend/errcode"
+	"gin-demo/pkg/errcode"
 )
 
 type Response struct {
@@ -25,5 +25,13 @@ func Fail(c *gin.Context, code int) {
 		Code: code,
 		Msg:  errcode.GetMsg(code),
 		Data: nil,
+	})
+}
+
+func FailReason(c *gin.Context, code int, reason string) {
+	c.JSON(200, Response{
+		Code: code,
+		Msg:  errcode.GetMsg(code),
+		Data: reason,
 	})
 }

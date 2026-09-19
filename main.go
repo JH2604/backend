@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"gin-demo/internal/handler"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -47,6 +48,7 @@ func main() {
 	initDB()
 
 	r := gin.Default()
+	r.POST("/api/register", handler.Register)
 
 	// 5. 发布帖子的接口
 	r.POST("/api/v1/lost-item", func(c *gin.Context) {

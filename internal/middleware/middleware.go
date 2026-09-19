@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"campus-lost-found/backend/errcode"
-	"campus-lost-found/backend/response"
 	"fmt"
+	"gin-demo/pkg/errcode"
+	"gin-demo/pkg/response"
 	"runtime/debug"
 	"time"
 

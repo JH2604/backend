@@ -1,16 +1,16 @@
 package handler
 
 import (
-	"campus-lost-found/backend/errcode"
+	"gin-demo/pkg/errcode"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 
-	"campus-lost-found/backend/models"
-	"campus-lost-found/backend/response"
+	"gin-demo/internal/model"
+	"gin-demo/pkg/response"
 )
 
-var items = []models.Item{
+var items = []model.Item{
 	{ID: 1, Name: "雨伞", Type: "lost", Status: "pending"},
 	{ID: 2, Name: "手机", Type: "found", Status: "pending"},
 	{ID: 3, Name: "钥匙", Type: "lost", Status: "pending"},
@@ -64,7 +64,7 @@ func ListItems(c *gin.Context) {
 	}
 
 	category := c.Query("type")
-	news := make([]models.Item, 0)
+	news := make([]model.Item, 0)
 	for _, v := range items {
 		if category == v.Type || category == "" {
 
@@ -73,7 +73,7 @@ func ListItems(c *gin.Context) {
 		}
 	}
 	if len(news) <= (result-1)*extent {
-		new := make([]models.Item, 0)
+		new := make([]model.Item, 0)
 		response.Success(c, new)
 		return
 
