@@ -8,12 +8,12 @@ import (
 	"gin-demo/pkg/response"
 )
 
-func Register(c *gin.Context){
+func Register(c *gin.Context) {
 	var a model.RegisterReq
 	err := c.ShouldBindJSON(&a)
-	if err != nil{
-		response.FailReason(c,errcode.ErrInvalidParams,err.Error())
+	if err != nil {
+		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
 		return
 	}
-	response.Success(c,a.Username)
+	response.Success(c, a.Username)
 }
