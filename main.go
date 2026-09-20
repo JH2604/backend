@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gin-demo/internal/handler"
+	"gin-demo/internal/repository"
 	"gin-demo/pkg/errcode"
 	"gin-demo/pkg/response"
 
@@ -28,6 +29,7 @@ func initDB() {
 	if err != nil {
 		panic("❌ 数据库连接失败，错误信息: " + err.Error())
 	}
+	repository.Init(db)
 
 	// 连接池配置，防止 invalid connection
 	sqlDB, err := db.DB()
