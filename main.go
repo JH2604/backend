@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 
 	"gin-demo/internal/handler"
+	"gin-demo/pkg/errcode"
+	"gin-demo/pkg/response"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -56,26 +57,19 @@ func main() {
 		var item model.LostItem // ⚠️ 这里改成 model.LostItem
 
 		if err := c.ShouldBindJSON(&item); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    400,
-				"message": "参数错误: " + err.Error(),
-			})
+			response.FailReason(c, errcode.ErrInvalidParams, err.Error())
+			fmt.Println("❌ 发布失败:", err.Error())
 			return
 		}
 
 		if err := db.Create(&item).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code":    500,
-				"message": "数据库写入失败: " + err.Error(),
-			})
+			response.Fail(c, errcode.ErrServer)
+			fmt.Println("❌ 数据写入失败:", err.Error())
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"code":    200,
-			"message": "发布成功，已存入数据库",
-			"data":    item,
-		})
+		response.Success(c, item)
+
 	})
 
 	// 6. 获取失物招领列表
@@ -90,18 +84,12 @@ func main() {
 		}
 
 		if err := query.Find(&items).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code":    500,
-				"message": "查询失败: " + err.Error(),
-			})
+			response.Fail(c, errcode.ErrServer)
+			fmt.Println("❌ 失物查询失败:", err.Error())
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"code":    200,
-			"message": "查询成功",
-			"data":    items,
-		})
+		response.Success(c, items)
 	})
 
 	// 7. 获取单条帖子详情
@@ -111,24 +99,15 @@ func main() {
 
 		if err := db.First(&item, id).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
-				c.JSON(http.StatusNotFound, gin.H{
-					"code":    404,
-					"message": "帖子不存在",
-				})
+				response.Fail(c, errcode.ErrNotFound)
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code":    500,
-				"message": "查询失败: " + err.Error(),
-			})
+			response.Fail(c, errcode.ErrServer)
+			fmt.Println("❌ 帖子查询失败:", err.Error())
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"code":    200,
-			"message": "查询成功",
-			"data":    item,
-		})
+		response.Success(c, item)
 	})
 
 	r.Run(":8000")
