@@ -10,6 +10,6 @@ type RegisterReq struct {
 type User struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	Username  string    `json:"username" binding:"required" gorm:"uniqueIndex;size:20"`
-	Password  string    `json:"password"`
+	Password  string    `json:"password" gorm:"size:80"`
 	CreatedAt time.Time `json:"created_at"`
 }
