@@ -4,6 +4,7 @@ package errcode
 const (
 	Success          = 0     // 成功
 	ErrUserExists    = 20001 // 用户名已存在
+	ErrUserFormat    = 20002 // 用户名或密码错误
 	ErrInvalidParams = 40001 // 参数错误
 	ErrNotFound      = 40002 // 资源不存在
 	ErrUnauthorized  = 40003 // 未登录或登录已过期
@@ -15,6 +16,7 @@ const (
 var messages = map[int]string{
 	Success:          "成功",
 	ErrUserExists:    "用户名已存在",
+	ErrUserFormat:    "用户名或密码错误",
 	ErrInvalidParams: "参数错误",
 	ErrNotFound:      "资源不存在",
 	ErrUnauthorized:  "未登录或登录已过期",

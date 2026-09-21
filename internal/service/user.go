@@ -1,3 +1,4 @@
+// 业务：哈希、重名判断
 package service
 
 import (
@@ -7,9 +8,11 @@ import (
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 var ErrUserExists = errors.New("用户已存在")
+var ErrInvalidCredentials = errors.New("用户名或密码错误")
 
 func RegisterUser(username, password string) (*model.User, error) {
 
@@ -31,4 +34,20 @@ func RegisterUser(username, password string) (*model.User, error) {
 
 	}
 	return user, nil
+}
+
+func LoginUser(username, password string) (*model.User, error) {
+	user, err := repository.FindByUsername(username)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrInvalidCredentials
+		}
+		return nil, err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+	return &user, nil
+
 }

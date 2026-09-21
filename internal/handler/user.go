@@ -1,4 +1,6 @@
+// HTTP 的事
 package handler
+
 
 import (
 	"errors"
@@ -31,4 +33,23 @@ func Register(c *gin.Context) {
 	}
 	response.Success(c, user.Username)
 
+}
+func Login(c *gin.Context){
+	var b model.LoginReq
+	err := c.ShouldBindJSON(&b)
+	if err != nil{
+		response.FailReason(c,errcode.ErrInvalidParams,err.Error())
+		return
+	}
+	user1,err := service.LoginUser(b.Username,b.Password)
+	if err != nil{
+		if errors.Is(err,service.ErrInvalidCredentials){
+			response.Fail(c,errcode.ErrUserFormat)
+			return
+		}
+		response.Fail(c,errcode.ErrServer)
+		fmt.Println("❌",err)
+		return
+	}
+	response.Success(c,user1.Username)
 }
