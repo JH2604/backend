@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 
 	"gin-demo/internal/model"
 	"gin-demo/internal/repository"
@@ -19,20 +20,25 @@ func Register(c *gin.Context) {
 		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
 		return
 	}
+	haxi, err := bcrypt.GenerateFromPassword([]byte(a.Password), bcrypt.DefaultCost)
+	if err != nil {
+		response.Fail(c, errcode.ErrServer)
+		return
+	}
 
 	user := model.User{
 		Username: a.Username,
-		Password: a.Password,
+		Password: string(haxi),
 	}
 	err = repository.CreateUser(&user)
 	if err != nil {
 		reception := strings.Contains(err.Error(), "Duplicate entry")
-		if reception == true {
-			response.FailReason(c, errcode.Errcustomer, err.Error())
+		if reception {
+			response.FailReason(c, errcode.ErrUserExists, err.Error())
 			return
 		}
 		response.Fail(c, errcode.ErrServer)
-		fmt.Println("❌ 数据库连不上", err.Error())
+		fmt.Println("❌ 数据库操作失败", err.Error())
 		return
 
 	}
