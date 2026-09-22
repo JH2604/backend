@@ -2,6 +2,7 @@ package router
 
 import (
 	"gin-demo/internal/handler"
+	"gin-demo/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,6 +11,9 @@ import (
 func RegisterRoutes(r *gin.Engine) {
 	// 队友负责的用户模块路由
 	r.POST("/api/register", handler.Register)
+	r.GET("/api/me", middleware.Auth(),func(c *gin.Context)  {
+		
+	})
 
 	// 你负责的失物招领模块路由
 	v1 := r.Group("/api/v1")

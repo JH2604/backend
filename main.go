@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gin-demo/internal/handler"
+	"gin-demo/internal/middleware"
 	"gin-demo/internal/repository"
 	"gin-demo/pkg/errcode"
 	"gin-demo/pkg/response"
@@ -53,7 +54,9 @@ func main() {
 
 	r := gin.Default()
 	r.POST("/api/register", handler.Register)
-	r.POST("/api/login",handler.Login)
+	r.POST("/api/login", handler.Login)
+	r.GET("/api/me", middleware.Auth(), handler.GetCurrentUser)
+
 	// 5. 发布帖子的接口
 	r.POST("/api/v1/lost-item", func(c *gin.Context) {
 		var item model.LostItem // ⚠️ 这里改成 model.LostItem
