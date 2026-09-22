@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"gin-demo/internal/middleware"
 	"gin-demo/internal/model"
 	"gin-demo/internal/service"
 	"gin-demo/pkg/errcode"
@@ -60,4 +61,10 @@ func Login(c *gin.Context) {
 	}
 
 	response.Success(c, gin.H{"token": createdtoken})
+}
+
+func GetCurrentUser(c *gin.Context){
+	userID := middleware.GetUserID(c)
+	response.Success(c,gin.H{"user_id":userID})
+
 }
