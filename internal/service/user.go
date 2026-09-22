@@ -6,7 +6,9 @@ import (
 	"gin-demo/internal/model"
 	"gin-demo/internal/repository"
 	"strings"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -50,4 +52,15 @@ func LoginUser(username, password string) (*model.User, error) {
 	}
 	return &user, nil
 
+}
+
+var jwtSecret = []byte("dev-only-上线前必须换掉")
+
+func CreateToken(user *model.User) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
 }
