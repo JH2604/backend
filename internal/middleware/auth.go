@@ -44,3 +44,31 @@ func GetUserID(c *gin.Context) uint {
 	}
 	return id.UserID
 }
+
+func RequireRole(roles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, exist := c.Get(key)
+		if !exist {
+			response.Fail(c, errcode.ErrUnauthorized)
+			c.Abort()
+			return
+		}
+		info, ok := role.(*model.TokenInfo)
+		if !ok {
+			response.Fail(c, errcode.ErrUnauthorized)
+			c.Abort()
+			return
+		}
+		for _, v := range roles {
+			if info.Role == v {
+				c.Next()
+				return
+			}
+
+		}
+		response.Fail(c, errcode.ErrForbidden)
+		c.Abort()
+		return
+
+	}
+}
