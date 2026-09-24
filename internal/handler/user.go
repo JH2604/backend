@@ -63,8 +63,8 @@ func Login(c *gin.Context) {
 	response.Success(c, gin.H{"token": createdtoken})
 }
 
-func GetCurrentUser(c *gin.Context){
+func GetCurrentUser(c *gin.Context) {
 	userID := middleware.GetUserID(c)
-	response.Success(c,gin.H{"user_id":userID})
+	response.Success(c, gin.H{"user_id": userID})
 
 }

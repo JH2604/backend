@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"gin-demo/internal/model"
 	"gin-demo/internal/service"
 	"gin-demo/pkg/errcode"
 	"gin-demo/pkg/response"
@@ -20,26 +21,26 @@ func Auth() gin.HandlerFunc {
 			return
 		}
 		token1 := header[7:]
-		userID, err := service.ParseToken(token1)
+		info, err := service.ParseToken(token1)
 		if err != nil {
 			response.Fail(c, errcode.ErrUnauthorized)
 			c.Abort()
 			return
 		}
-		c.Set(key, userID)
+		c.Set(key, info)
 		c.Next()
 
 	}
 }
 
-func GetUserID(c *gin.Context)uint{
-	v,exist:=c.Get(key)
-	if !exist{
+func GetUserID(c *gin.Context) uint {
+	v, exist := c.Get(key)
+	if !exist {
 		return 0
 	}
-	id,ok:=v.(uint)
-	if !ok{
+	id, ok := v.(*model.TokenInfo)
+	if !ok {
 		return 0
 	}
-	return id
+	return id.UserID
 }

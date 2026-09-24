@@ -15,6 +15,7 @@ import (
 
 var ErrUserExists = errors.New("用户已存在")
 var ErrInvalidCredentials = errors.New("用户名或密码错误")
+var ErrInvalidToken = errors.New("token 不合法")
 
 func RegisterUser(username, password string) (*model.User, error) {
 
@@ -25,6 +26,7 @@ func RegisterUser(username, password string) (*model.User, error) {
 	user := &model.User{
 		Username: username,
 		Password: string(haxi),
+		Role:     model.RoleUser,
 	}
 	err = repository.CreateUser(user)
 	if err != nil {
@@ -60,21 +62,30 @@ func CreateToken(user *model.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
 		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+		"role":    user.Role,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtSecret)
 }
 
-func ParseToken(tokenStr string) (uint, error) {
+func ParseToken(tokenStr string) (*model.TokenInfo, error) {
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
 		return jwtSecret, nil
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	b := token.Claims.(jwt.MapClaims) //b装着payload解出来的所有字段
 	a := b["user_id"]                 //a是从map里取出的值
 	userID := uint(a.(float64))
+	role, ok := b["role"].(string)
+	if !ok {
+		return nil, ErrInvalidToken
 
-	return userID, nil
+	}
+
+	return &model.TokenInfo{
+		UserID: userID,
+		Role:   role,
+	}, nil
 }

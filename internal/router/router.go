@@ -11,8 +11,8 @@ import (
 func RegisterRoutes(r *gin.Engine) {
 	// 队友负责的用户模块路由
 	r.POST("/api/register", handler.Register)
-	r.GET("/api/me", middleware.Auth(),func(c *gin.Context)  {
-		
+	r.GET("/api/me", middleware.Auth(), func(c *gin.Context) {
+
 	})
 
 	// 你负责的失物招领模块路由
