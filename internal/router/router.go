@@ -23,12 +23,19 @@ import (
 
 // RegisterRoutes 负责注册所有的 HTTP 路由
 func RegisterRoutes(r *gin.Engine) {
+<<<<<<< Updated upstream
 	// 队友负责的用户模块路由
 	r.POST("/api/register", handler.Register) //注册
 	r.POST("/api/login", handler.Login)
 	r.GET("/api/me", middleware.Auth(), handler.GetCurrentUser)
+=======
+	// ---------- 队友负责的用户模块 ----------
+	r.POST("/api/register", handler.Register)                   // 注册
+	r.POST("/api/login", handler.Login)                         // 登录（拿 token）
+	r.GET("/api/me", middleware.Auth(), handler.GetCurrentUser) // 当前登录用户（需要 token）
+>>>>>>> Stashed changes
 
-	// 你负责的失物招领模块路由
+	// ---------- 你负责的失物招领模块 ----------
 	v1 := r.Group("/api/v1")
 	{
 		v1.POST("/lost-items", handler.CreateLostItem)
