@@ -1,13 +1,26 @@
 package model
 
-// 1. 数据库模型：多了 ID 字段
+// LostItem 是"数据库实体"（Entity）：它和数据库表 lost_items 一一对应。
+// 它的标签分两类：
+//   gorm:"..."  → 给数据库看的（列名、主键、长度）
+//   json:"..."  → 给前端看的（JSON 字段名）
+//   binding:"..." → 给 Gin 的校验器看的（请求参数必须满足什么条件）
 type LostItem struct {
-	//uint为无符号整数，即没有负数的int，且数据范围是int的2倍
-	//gorm:"primaryKey":告诉gorm，id是主键，类比数组的每个元素唯一下标
-	ID uint `gorm:"primaryKey" json:"id"` // GORM 默认认为 ID 是主键，自增
+	// ID：主键。gorm:"primaryKey" 告诉 GORM 这是主键、自增（类比数组的唯一下标）
+	// json:"id" 表示前端传/收的字段名叫 id
+	ID uint `gorm:"primaryKey" json:"id"`
 
-	//binding:"required":它告诉 Gin 框架：“当前端发来 JSON 时，这个字段绝对不能为空，如果没有，直接报错拦截！”
-	Title    string `json:"title" binding:"required"`
+	// Title：标题
+	// binding:"required,notblank" —— 逗号分隔的多个校验，【必须全部满足】才算通过：
+	//    required → 不能是"零值"：字符串里就是不能是 ""（而且字段不能缺）
+	//    notblank → 去掉两端的空白字符后，必须还有内容
+	//    为什么非加 notblank 不可？因为 " "（一个空格）长度是 1，
+	//    在 required 眼里【不是空值】，能大摇大摆溜进去 → 脏数据（就是队友测到的那个 bug）
+	Title string `json:"title" binding:"required,notblank"`
+
+	// Location：地点（可选，前端不传就是空字符串）
 	Location string `json:"location"`
-	Desc     string `json:"desc"`
+
+	// Desc：详细描述（可选）
+	Desc string `json:"desc"`
 }
