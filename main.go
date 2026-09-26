@@ -53,9 +53,11 @@ func main() {
 	initDB()
 
 	r := gin.Default()
+	r.Use(middleware.CORS())
 	r.POST("/api/register", handler.Register)
 	r.POST("/api/login", handler.Login)
 	r.GET("/api/me", middleware.Auth(), handler.GetCurrentUser)
+
 	// 临时路由：用来验证管理员权限中间件
 	r.GET("/api/admin/ping",
 		middleware.Auth(),
