@@ -103,7 +103,7 @@
 
 - **成功返回**:
 ```json
-{"code":0,"msg":"成功","data":{"user_id":14}}
+{"code":0,"msg":"成功","data":"user_id":14,"username":"zhangsan","role":"user"}
 
 
 ```

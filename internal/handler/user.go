@@ -64,7 +64,7 @@ func Login(c *gin.Context) {
 }
 
 func GetCurrentUser(c *gin.Context) {
-	userID := middleware.GetUserID(c)
-	response.Success(c, gin.H{"user_id": userID})
+	info := middleware.GetTokenInfo(c)
+	response.Success(c, gin.H{"user_id": info.UserID, "username": info.Username, "role": info.Role})
 
 }

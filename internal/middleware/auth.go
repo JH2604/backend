@@ -72,3 +72,15 @@ func RequireRole(roles ...string) gin.HandlerFunc {
 
 	}
 }
+
+func GetTokenInfo(c *gin.Context) *model.TokenInfo {
+	a, exist := c.Get(key)
+	if !exist {
+		return nil
+	}
+	id, ok := a.(*model.TokenInfo)
+	if !ok {
+		return nil
+	}
+	return id
+}

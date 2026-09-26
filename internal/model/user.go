@@ -27,6 +27,7 @@ type LoginReq struct {
 }
 
 type TokenInfo struct {
-	UserID uint
-	Role   string
+	UserID   uint
+	Username string
+	Role     string
 }

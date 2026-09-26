@@ -60,9 +60,10 @@ var jwtSecret = []byte("dev-only-上线前必须换掉")
 
 func CreateToken(user *model.User) (string, error) {
 	claims := jwt.MapClaims{
-		"user_id": user.ID,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-		"role":    user.Role,
+		"user_id":  user.ID,
+		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+		"username": user.Username,
+		"role":     user.Role,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtSecret)
@@ -79,13 +80,15 @@ func ParseToken(tokenStr string) (*model.TokenInfo, error) {
 	a := b["user_id"]                 //a是从map里取出的值
 	userID := uint(a.(float64))
 	role, ok := b["role"].(string)
+	username, _ := b["username"].(string)
+
 	if !ok {
 		return nil, ErrInvalidToken
 
 	}
-
 	return &model.TokenInfo{
-		UserID: userID,
-		Role:   role,
+		UserID:   userID,
+		Username: username,
+		Role:     role,
 	}, nil
 }
