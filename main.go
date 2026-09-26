@@ -67,7 +67,7 @@ func main() {
 		})
 
 	// 5. 发布帖子的接口
-	r.POST("/api/v1/lost-item", func(c *gin.Context) {
+	r.POST("/api/v1/lost-items", func(c *gin.Context) {
 		var item model.LostItem // ⚠️ 这里改成 model.LostItem
 
 		if err := c.ShouldBindJSON(&item); err != nil {
