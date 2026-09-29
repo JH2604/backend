@@ -2,9 +2,10 @@ package model
 
 // LostItem 是"数据库实体"（Entity）：它和数据库表 lost_items 一一对应。
 // 它的标签分两类：
-//   gorm:"..."  → 给数据库看的（列名、主键、长度）
-//   json:"..."  → 给前端看的（JSON 字段名）
-//   binding:"..." → 给 Gin 的校验器看的（请求参数必须满足什么条件）
+//
+//	gorm:"..."  → 给数据库看的（列名、主键、长度）
+//	json:"..."  → 给前端看的（JSON 字段名）
+//	binding:"..." → 给 Gin 的校验器看的（请求参数必须满足什么条件）
 type LostItem struct {
 	// ID：主键。gorm:"primaryKey" 告诉 GORM 这是主键、自增（类比数组的唯一下标）
 	// json:"id" 表示前端传/收的字段名叫 id
