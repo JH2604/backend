@@ -57,6 +57,8 @@ func main() {
 	r.POST("/api/register", handler.Register)
 	r.POST("/api/login", handler.Login)
 	r.GET("/api/me", middleware.Auth(), handler.GetCurrentUser)
+	r.POST("/api/v1/upload", middleware.Auth(), handler.UploadPhoto)
+	r.Static("/uploads", "./uploads")
 
 	// 临时路由：用来验证管理员权限中间件
 	r.GET("/api/admin/ping",
