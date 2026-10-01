@@ -30,4 +30,5 @@ type TokenInfo struct {
 	UserID   uint
 	Username string
 	Role     string
+	SID      string
 }

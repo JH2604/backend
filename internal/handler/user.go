@@ -44,14 +44,19 @@ func Login(c *gin.Context) {
 	user1, err := service.LoginUser(b.Username, b.Password)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
-			response.Fail(c, errcode.ErrResourceConflict)
+			response.Fail(c, errcode.ErrBadCredentials)
 			return
 		}
 		response.Fail(c, errcode.ErrServer)
 		fmt.Println("❌服务器内部错误:", err)
 		return
 	}
-	createdtoken, err := service.CreateToken(user1)
+	accessToken, refreshToken, err := service.GenerateTokenPair(
+		user1,
+		c.GetHeader("X-Client-Platform"),
+		c.ClientIP(),
+		c.Request.UserAgent(),
+	)
 	if err != nil {
 
 		response.Fail(c, errcode.ErrServer)
@@ -60,7 +65,18 @@ func Login(c *gin.Context) {
 
 	}
 
-	response.Success(c, gin.H{"token": createdtoken})
+	response.Success(c, gin.H{
+		"access_token":       accessToken,
+		"refresh_token":      refreshToken,
+		"token_type":         "Bearer",
+		"expires_in":         int(service.AccessTokenTTL.Seconds()),
+		"refresh_expires_in": int(service.RefreshTokenTTL.Seconds()),
+		"user": gin.H{
+			"id":       user1.ID,
+			"username": user1.Username,
+			"role":     user1.Role,
+		},
+	})
 }
 
 func GetCurrentUser(c *gin.Context) {

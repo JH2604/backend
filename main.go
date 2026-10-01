@@ -7,6 +7,7 @@ import (
 	"gin-demo/internal/middleware"
 	"gin-demo/internal/repository"
 	"gin-demo/internal/router"
+	"gin-demo/pkg/config"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -39,7 +40,7 @@ func initDB() {
 	}
 
 	// ⚠️ 关键：这里要改成 model.LostItem
-	err = db.AutoMigrate(&model.LostItem{}, &model.User{})
+	err = db.AutoMigrate(&model.LostItem{}, &model.User{}, &model.Session{})
 	if err != nil {
 		panic("❌ 自动建表失败")
 	}
@@ -47,6 +48,9 @@ func initDB() {
 }
 
 func main() {
+	if config.JWTSecret == "" {
+		panic("❌ 必须设置环境变量 JWT_SECRET(长度 ≥ 32 字节）")
+	}
 	// 4. 启动时先连数据库
 	initDB()
 

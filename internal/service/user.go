@@ -5,11 +5,8 @@ import (
 	"errors"
 	"gin-demo/internal/model"
 	"gin-demo/internal/repository"
-	"gin-demo/pkg/config"
 	"strings"
-	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -17,6 +14,7 @@ import (
 var ErrUserExists = errors.New("用户已存在")
 var ErrInvalidCredentials = errors.New("用户名或密码错误")
 var ErrInvalidToken = errors.New("token 不合法")
+var ErrSessionInvalid = errors.New("会话已失效")
 
 func RegisterUser(username, password string) (*model.User, error) {
 
@@ -55,39 +53,4 @@ func LoginUser(username, password string) (*model.User, error) {
 	}
 	return &user, nil
 
-}
-
-func CreateToken(user *model.User) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id":  user.ID,
-		"exp":      time.Now().Add(24 * time.Hour).Unix(),
-		"username": user.Username,
-		"role":     user.Role,
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(config.JWTSecret))
-}
-
-func ParseToken(tokenStr string) (*model.TokenInfo, error) {
-	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
-		return []byte(config.JWTSecret), nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	claims := token.Claims.(jwt.MapClaims)
-	rawUserID := claims["user_id"]
-	userID := uint(rawUserID.(float64))
-	role, ok := claims["role"].(string)
-	username, _ := claims["username"].(string)
-
-	if !ok {
-		return nil, ErrInvalidToken
-
-	}
-	return &model.TokenInfo{
-		UserID:   userID,
-		Username: username,
-		Role:     role,
-	}, nil
 }
