@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"gin-demo/internal/handler"
 	"gin-demo/internal/middleware"
 	"gin-demo/internal/repository"
-	"gin-demo/pkg/errcode"
-	"gin-demo/pkg/response"
+	"gin-demo/internal/router"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -52,79 +50,12 @@ func main() {
 	// 4. 启动时先连数据库
 	initDB()
 
-	r := gin.Default()
+	r := gin.New()
+	r.Use(middleware.Recovery())
+	r.Use(middleware.Logger())
 	r.Use(middleware.CORS())
-	r.POST("/api/register", handler.Register)
-	r.POST("/api/login", handler.Login)
-	r.GET("/api/me", middleware.Auth(), handler.GetCurrentUser)
-	r.POST("/api/v1/upload", middleware.Auth(), handler.UploadPhoto)
+	router.RegisterRoutes(r)
 	r.Static("/uploads", "./uploads")
-
-	// 临时路由：用来验证管理员权限中间件
-	r.GET("/api/admin/ping",
-		middleware.Auth(),
-		middleware.RequireRole(model.RoleLostAdmin, model.RoleSysAdmin),
-		func(c *gin.Context) {
-			response.Success(c, gin.H{"msg": "你是管理员"})
-		})
-
-	// 5. 发布帖子的接口
-	r.POST("/api/v1/lost-items", func(c *gin.Context) {
-		var item model.LostItem // ⚠️ 这里改成 model.LostItem
-
-		if err := c.ShouldBindJSON(&item); err != nil {
-			response.FailReason(c, errcode.ErrInvalidParams, err.Error())
-			fmt.Println("❌ 发布失败:", err.Error())
-			return
-		}
-
-		if err := db.Create(&item).Error; err != nil {
-			response.Fail(c, errcode.ErrServer)
-			fmt.Println("❌ 数据写入失败:", err.Error())
-			return
-		}
-
-		response.Success(c, item)
-
-	})
-
-	// 6. 获取失物招领列表
-	r.GET("/api/v1/lost-items", func(c *gin.Context) {
-		var items []model.LostItem // ⚠️ 这里改成 []model.LostItem
-
-		location := c.Query("location")
-		query := db.Model(&model.LostItem{}) // ⚠️ 这里改成 &model.LostItem{}
-
-		if location != "" {
-			query = query.Where("location LIKE ?", "%"+location+"%")
-		}
-
-		if err := query.Find(&items).Error; err != nil {
-			response.Fail(c, errcode.ErrServer)
-			fmt.Println("❌ 失物查询失败:", err.Error())
-			return
-		}
-
-		response.Success(c, items)
-	})
-
-	// 7. 获取单条帖子详情
-	r.GET("/api/v1/lost-items/:id", func(c *gin.Context) {
-		id := c.Param("id")
-		var item model.LostItem // ⚠️ 这里改成 model.LostItem
-
-		if err := db.First(&item, id).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				response.Fail(c, errcode.ErrNotFound)
-				return
-			}
-			response.Fail(c, errcode.ErrServer)
-			fmt.Println("❌ 帖子查询失败:", err.Error())
-			return
-		}
-
-		response.Success(c, item)
-	})
 
 	r.Run(":8000")
 }

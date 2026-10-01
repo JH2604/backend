@@ -56,18 +56,3 @@ func Counter() gin.HandlerFunc {
 
 	}
 }
-
-func OnlyGet() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if c.Request.Method != "GET" {
-			response.Fail(c, errcode.ErrForbidden)
-
-			c.Abort()
-			return
-
-		}
-		c.Next()
-
-	}
-
-}

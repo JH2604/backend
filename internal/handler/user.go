@@ -24,7 +24,7 @@ func Register(c *gin.Context) {
 	user, err := service.RegisterUser(a.Username, a.Password)
 	if err != nil {
 		if errors.Is(err, service.ErrUserExists) {
-			response.Fail(c, errcode.ErrUserExists)
+			response.Fail(c, errcode.ErrResourceConflict)
 			return
 		}
 		response.Fail(c, errcode.ErrServer)
@@ -44,7 +44,7 @@ func Login(c *gin.Context) {
 	user1, err := service.LoginUser(b.Username, b.Password)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
-			response.Fail(c, errcode.ErrUserFormat)
+			response.Fail(c, errcode.ErrResourceConflict)
 			return
 		}
 		response.Fail(c, errcode.ErrServer)

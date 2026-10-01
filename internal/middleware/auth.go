@@ -16,14 +16,14 @@ func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		header := c.GetHeader("Authorization")
 		if !strings.HasPrefix(header, "Bearer ") {
-			response.Fail(c, errcode.ErrUnauthorized)
+			response.Fail(c, errcode.ErrNoToken)
 			c.Abort()
 			return
 		}
 		token1 := header[7:]
 		info, err := service.ParseToken(token1)
 		if err != nil {
-			response.Fail(c, errcode.ErrUnauthorized)
+			response.Fail(c, errcode.ErrNoToken)
 			c.Abort()
 			return
 		}
@@ -49,13 +49,13 @@ func RequireRole(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, exist := c.Get(key)
 		if !exist {
-			response.Fail(c, errcode.ErrUnauthorized)
+			response.Fail(c, errcode.ErrNoToken)
 			c.Abort()
 			return
 		}
 		info, ok := role.(*model.TokenInfo)
 		if !ok {
-			response.Fail(c, errcode.ErrUnauthorized)
+			response.Fail(c, errcode.ErrNoToken)
 			c.Abort()
 			return
 		}
@@ -66,7 +66,7 @@ func RequireRole(roles ...string) gin.HandlerFunc {
 			}
 
 		}
-		response.Fail(c, errcode.ErrForbidden)
+		response.Fail(c, errcode.ErrPermission)
 		c.Abort()
 		return
 
