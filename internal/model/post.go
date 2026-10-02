@@ -67,6 +67,11 @@ type Post struct {
 	// 由 service 层批量查出来填进去（避免 N+1，见下方说明）
 	Author *UserBrief `gorm:"-" json:"author,omitempty"`
 
+	IsMine          bool `gorm:"-" json:"is_mine"`
+	CanDelete       bool `gorm:"-" json:"can_delete"`
+	CanChangeStatus bool `gorm:"-" json:"can_change_status"`
+
+
 }
 
 // PostLocation 地点对象（JSON 列）

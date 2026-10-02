@@ -57,6 +57,17 @@ func ListPosts(userID uint, q *model.ListPostsQuery) ([]model.Post, int64, error
 
 }
 
+// toUserBrief 把 User 转成对外的 UserBrief。
+// ⚠️ 只挑这 4 个字段 —— 绝不能带上 Password，那是 bcrypt 哈希
+func toUserBrief(u model.User) model.UserBrief {
+	return model.UserBrief{
+		ID:        u.ID,
+		Name:      u.Username,
+		AvatarURL: "",
+		Role:      u.Role,
+	}
+}
+
 func attachAuthors(posts []model.Post) error {
 	seen := map[uint]bool{}
 	ids := []uint{}
@@ -72,12 +83,7 @@ func attachAuthors(posts []model.Post) error {
 	}
 	authorMap := map[uint]model.UserBrief{}
 	for _, u := range users {
-		authorMap[u.ID] = model.UserBrief{
-			Name:      u.Username,
-			ID:        u.ID,
-			Role:      u.Role,
-			AvatarURL: "",
-		}
+		authorMap[u.ID] = toUserBrief(u)
 	}
 	for p, _ := range posts {
 		b, ok := authorMap[posts[p].UserID]
@@ -94,7 +100,7 @@ func UpdatePostStatus(postID, userID uint, status string) (*model.Post, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrPostNotFound
 		}
-		return	nil,err
+		return nil, err
 	}
 	if post.UserID != userID {
 		return nil, ErrNotPostOwner
@@ -108,11 +114,32 @@ func UpdatePostStatus(postID, userID uint, status string) (*model.Post, error) {
 		closedAt = &now
 	}
 	err = repository.UpdatePostStatus(postID, status, closedAt)
-	if err != nil{
-		return nil,err
+	if err != nil {
+		return nil, err
 	}
 	post.Status = status
 	post.ClosedAt = closedAt
 	return post, nil
+
+}
+
+func GetPost(postID, userID uint, role string) (*model.Post, error) {
+	post, err := repository.GetPostByID(postID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrPostNotFound
+		}
+		return nil, err
+	}
+	v, err := repository.FindUserByID(post.UserID)
+	if err != nil {
+		return nil, err
+	}
+	brief := toUserBrief(*v)
+	post.Author = &brief
+	post.IsMine = post.UserID == userID
+	post.CanDelete = post.IsMine || role == model.RoleAdmin
+	post.CanChangeStatus = post.IsMine
+	return post,nil
 
 }

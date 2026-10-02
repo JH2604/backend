@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"gin-demo/internal/middleware"
 	"gin-demo/internal/model"
-	"gin-demo/internal/repository"
 	"gin-demo/internal/service"
 	"gin-demo/pkg/errcode"
 	"gin-demo/pkg/response"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func CreatePost(c *gin.Context) {
@@ -52,18 +50,25 @@ func ListPosts(c *gin.Context) {
 	})
 }
 
-func GetLostItem(c *gin.Context) {
-	id := c.Param("id")
-	item, err := repository.GetLostItemByID(id)
+func GetPost(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			response.Fail(c, errcode.ErrNotFound)
-			return
-		}
-		response.Fail(c, errcode.ErrServer)
+		response.Fail(c, errcode.ErrInvalidParams)
 		return
 	}
-	response.Success(c, item)
+	info := middleware.GetTokenInfo(c)
+	post, err := service.GetPost(uint(id), info.UserID, info.Role)
+	if err != nil {
+		if errors.Is(err, service.ErrPostNotFound) {
+			response.Fail(c, errcode.ErrNotFound)
+			return
+		} else {
+			response.Fail(c, errcode.ErrServer)
+		}
+		return
+	}
+	response.Success(c, post)
+
 }
 
 func UpdatePostStatus(c *gin.Context) {
