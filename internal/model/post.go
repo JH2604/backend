@@ -36,7 +36,7 @@ type Post struct {
 	Location PostLocation `gorm:"serializer:json;type:json" json:"location"`
 
 	// 事件发生时间。前端传 RFC3339，如 2026-09-22T15:04:05+08:00
-	EventTime time.Time `gorm:"index" json:"event_time"`
+	EventTime *time.Time `gorm:"index" json:"event_time"`
 
 	// 状态：只有两个值  open(待处理) / closed(已完结)
 	//default:如果前端没传status,数据库自动把它设为open
@@ -45,6 +45,10 @@ type Post struct {
 	//插入和修改时间时自动推进时间
 	CreatedAt time.Time `json:"created_at"` // GORM 自动填
 	UpdatedAt time.Time `json:"updated_at"` // GORM 自动维护
+
+	// 标记为已找到 / 已认领的时间。进行中为 nil，序列化成 null
+	ClosedAt *time.Time `json:"closed_at"`
+
 
 	//  软删除：删除时不真的 DELETE，而是把 deleted_at 打上时间戳
 	//    GORM 之后所有查询都会自动加上 WHERE deleted_at IS NULL（只查没被删的）
@@ -63,8 +67,6 @@ type Post struct {
 	// 由 service 层批量查出来填进去（避免 N+1，见下方说明）
 	Author *UserBrief `gorm:"-" json:"author,omitempty"`
 
-	// 评论数，同样不落库，由聚合查询算出
-	CommentCount int64 `gorm:"-" json:"comment_count"`
 }
 
 // PostLocation 地点对象（JSON 列）
@@ -137,7 +139,7 @@ type CreatePostReq struct {
 	Content   string       `json:"content" binding:"required,notblank,max=1000"`
 	Images    []string     `json:"images" binding:"omitempty,max=9"`
 	Location  PostLocation `json:"location" binding:"required"`
-	EventTime time.Time    `json:"event_time" binding:"required"` // RFC3339
+	EventTime *time.Time    `json:"event_time"` // RFC3339
 }
 
 // DeletePostReq：P4 删除（可选请求体）
