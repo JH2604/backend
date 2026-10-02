@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"gin-demo/internal/middleware"
 	"gin-demo/internal/model"
@@ -8,6 +9,7 @@ import (
 	"gin-demo/internal/service"
 	"gin-demo/pkg/errcode"
 	"gin-demo/pkg/response"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -62,4 +64,45 @@ func GetLostItem(c *gin.Context) {
 		return
 	}
 	response.Success(c, item)
+}
+
+func UpdatePostStatus(c *gin.Context) {
+	n, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, errcode.ErrInvalidParams)
+		return
+
+	}
+	userID := middleware.GetUserID(c)
+	var req model.UpdatePostStatusReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
+		return
+	}
+
+	post, err := service.UpdatePostStatus(uint(n), userID, req.Status)
+	if err != nil {
+		if errors.Is(err, service.ErrPostNotFound) {
+			response.Fail(c, errcode.ErrNotFound)
+		} else if errors.Is(err, service.ErrNotPostOwner) {
+			response.Fail(c, errcode.ErrPermission)
+		} else {
+			response.Fail(c, errcode.ErrServer)
+		}
+		return
+	}
+	var msg string
+	if post.Status == model.PostStatusOpen {
+		msg = "已恢复为进行中"
+	} else if post.Type == model.PostTypeLost {
+		msg = "已标记为已找到"
+	} else {
+		msg = "已标记为已认领"
+	}
+
+	response.SuccessMsg(c, msg, gin.H{
+		"id":        post.ID,
+		"status":    post.Status,
+		"closed_at": post.ClosedAt,
+	})
 }

@@ -26,6 +26,7 @@ func RegisterRoutes(r *gin.Engine) {
 		v1.POST("/posts", middleware.Auth(), handler.CreatePost)
 		v1.GET("/posts", middleware.Auth(), handler.ListPosts)
 		v1.GET("/posts/:id", handler.GetLostItem)
+		v1.PATCH("/posts/:id/status", middleware.Auth(), handler.UpdatePostStatus)
 	}
 }
 

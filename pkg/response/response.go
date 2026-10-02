@@ -50,3 +50,11 @@ func FailReason(c *gin.Context, code int, reason string) {
 		Data: nil,
 	})
 }
+
+func SuccessMsg(c *gin.Context,msg string,data any){
+	c.JSON(200,Response{
+		Msg : msg,
+		Data: data,
+		Code: errcode.Success,
+	})
+}

@@ -1,9 +1,16 @@
 package service
 
 import (
+	"errors"
 	"gin-demo/internal/model"
 	"gin-demo/internal/repository"
+	"time"
+
+	"gorm.io/gorm"
 )
+
+var ErrPostNotFound = errors.New("帖子不存在")
+var ErrNotPostOwner = errors.New("不是本人的帖子")
 
 func CreatePost(userID uint, req model.CreatePostReq) (*model.Post, error) {
 	p := &model.Post{
@@ -36,17 +43,17 @@ func ListPosts(userID uint, q *model.ListPostsQuery) ([]model.Post, int64, error
 	if q.PageSize > model.MaxPageSize {
 		q.PageSize = model.MaxPageSize
 	}
-	posts,total,err := repository.ListPosts(*q, userID)
-	if err != nil{
-		return nil,0,err
+	posts, total, err := repository.ListPosts(*q, userID)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	err = attachAuthors(posts)
-	if err != nil{
-		return nil,0,err
+	if err != nil {
+		return nil, 0, err
 	}
 
-	return	posts,total,nil
+	return posts, total, nil
 
 }
 
@@ -66,18 +73,46 @@ func attachAuthors(posts []model.Post) error {
 	authorMap := map[uint]model.UserBrief{}
 	for _, u := range users {
 		authorMap[u.ID] = model.UserBrief{
-			Name: u.Username,
-			ID: u.ID,
-			Role: u.Role,
+			Name:      u.Username,
+			ID:        u.ID,
+			Role:      u.Role,
 			AvatarURL: "",
-
 		}
 	}
-	for p,_ := range posts {
-		b,ok := authorMap[posts[p].UserID]
-		if ok{
+	for p, _ := range posts {
+		b, ok := authorMap[posts[p].UserID]
+		if ok {
 			posts[p].Author = &b
 		}
 	}
 	return nil
+}
+
+func UpdatePostStatus(postID, userID uint, status string) (*model.Post, error) {
+	post, err := repository.GetPostByID(postID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrPostNotFound
+		}
+		return	nil,err
+	}
+	if post.UserID != userID {
+		return nil, ErrNotPostOwner
+	}
+	if post.Status == status {
+		return post, nil
+	}
+	var closedAt *time.Time // 默认 nil —— 撤回时正好要写 NULL
+	if status == model.PostStatusClosed {
+		now := time.Now()
+		closedAt = &now
+	}
+	err = repository.UpdatePostStatus(postID, status, closedAt)
+	if err != nil{
+		return nil,err
+	}
+	post.Status = status
+	post.ClosedAt = closedAt
+	return post, nil
+
 }
