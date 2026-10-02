@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"gin-demo/internal/model"
 	"gin-demo/internal/service"
 	"gin-demo/pkg/errcode"
@@ -21,9 +22,13 @@ func Auth() gin.HandlerFunc {
 			return
 		}
 		token1 := header[7:]
-		info, err := service.ParseToken(token1)
+		info, err := service.ValidateToken(token1)
 		if err != nil {
-			response.Fail(c, errcode.ErrNoToken)
+			if errors.Is(err, service.ErrSessionInvalid) {
+				response.Fail(c, errcode.ErrSessionInvalid) //40103会话没了，跳登录页
+			} else {
+				response.Fail(c, errcode.ErrNoToken)//40100 令牌本身不行
+			}
 			c.Abort()
 			return
 		}

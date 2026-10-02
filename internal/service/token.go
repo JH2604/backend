@@ -26,7 +26,7 @@ func createAccessToken(user *model.User, sid string) (string, error) {
 	}
 	jti := hex.EncodeToString(jtiBytes)
 	claims := jwt.MapClaims{
-		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+		"exp":      time.Now().Add(AccessTokenTTL).Unix(),
 		"sub":      strconv.FormatUint(uint64(user.ID), 10),
 		"role":     user.Role,
 		"sid":      sid,
@@ -112,8 +112,8 @@ func GenerateTokenPair(
 		AccessTokenHash:  sha256Hex(access),
 		RefreshTokenHash: sha256Hex(refresh),
 		PrevRefreshHash:  "",
-		AccessExpiresAt:  time.Now().Add(24 * time.Hour),
-		RefreshExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+		AccessExpiresAt:  time.Now().Add(AccessTokenTTL),
+		RefreshExpiresAt: time.Now().Add(RefreshTokenTTL),
 		Platform:         platform,
 		IP:               ip,
 		UserAgent:        userAgent,
@@ -143,4 +143,9 @@ func ValidateToken(tokenStr string) (*model.TokenInfo, error) {
 	}
 
 	return info, nil
+}
+
+func SessionCancel(sid string) error {
+	return repository.RevokeSession(sid)
+
 }

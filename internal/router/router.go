@@ -13,6 +13,7 @@ func RegisterRoutes(r *gin.Engine) {
 	r.POST("/api/v1/auth/register", handler.Register) //注册
 	r.POST("/api/v1/auth/login", handler.Login)
 	r.GET("/api/v1/users/me", middleware.Auth(), handler.GetCurrentUser)
+	r.POST("/api/v1/auth/logout",middleware.Auth(),handler.Logout)
 	r.POST("/api/v1/files", middleware.Auth(), handler.UploadPhoto)
 
 	// ---------- 你负责的失物招领模块 ----------

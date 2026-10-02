@@ -84,3 +84,14 @@ func GetCurrentUser(c *gin.Context) {
 	response.Success(c, gin.H{"user_id": info.UserID, "username": info.Username, "role": info.Role})
 
 }
+
+func Logout(c *gin.Context) {
+	info := middleware.GetTokenInfo(c)
+	err := service.SessionCancel(info.SID)
+	if err != nil {
+		response.Fail(c, errcode.ErrServer)
+		fmt.Println("❌", err)
+		return
+	}
+	response.Success(c, "注销成功")
+}
