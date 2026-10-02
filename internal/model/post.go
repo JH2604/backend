@@ -69,7 +69,7 @@ type Post struct {
 
 // PostLocation 地点对象（JSON 列）
 type PostLocation struct {
-	Name string `json : name`
+	Name string `json:"name"`
 
 	//这个 omitempty 是告诉 Gin：“如果前端没传这个值，
 	// 或者它等于零值（0），就不要把它序列化到 JSON 里返回给我。”

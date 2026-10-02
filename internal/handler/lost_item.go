@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"fmt"
+	"gin-demo/internal/middleware"
 	"gin-demo/internal/model"
 	"gin-demo/internal/repository"
+	"gin-demo/internal/service"
 	"gin-demo/pkg/errcode"
 	"gin-demo/pkg/response"
 
@@ -10,17 +13,21 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateLostItem(c *gin.Context) {
-	var item model.LostItem
-	if err := c.ShouldBindJSON(&item); err != nil {
+func CreatePost(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+	var req model.CreatePostReq
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
 		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
 		return
 	}
-	if err := repository.CreateLostItem(&item); err != nil {
+	post, err := service.CreatePost(userID, req)
+	if err != nil {
 		response.Fail(c, errcode.ErrServer)
+		fmt.Println("❌ 发帖失败:", err)
 		return
 	}
-	response.Success(c, item)
+	response.SuccessCreated(c, post)
 }
 
 func ListLostItems(c *gin.Context) {
