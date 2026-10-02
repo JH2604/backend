@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	AccessTokenTTL  = 24 * time.Hour
+	AccessTokenTTL  = 2 * time.Hour
 	RefreshTokenTTL = 7 * 24 * time.Hour
 )
 
@@ -163,8 +163,8 @@ func RefreshTokens(refreshToken string) (access, refresh string, err error) {
 		if err1 != nil {
 			return "", "", ErrRefreshTokenInvalid
 		}
-		repository.RevokeSession(s1.ID)
-		fmt.Println("❌刷新令牌已被使用，撤销会话:", s1.ID)
+		repository.RevokeAllSessionsForUser(s1.UserID)
+		fmt.Println("❌刷新令牌已被使用，撤销所有会话:", s1.ID)
 		return "", "", ErrRefreshTokenInvalid
 
 	}
