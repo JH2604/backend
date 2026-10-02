@@ -30,14 +30,24 @@ func CreatePost(c *gin.Context) {
 	response.SuccessCreated(c, post)
 }
 
-func ListLostItems(c *gin.Context) {
-	location := c.Query("location")
-	items, err := repository.ListLostItems(location)
+func ListPosts(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+	var q model.ListPostsQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
+		return
+	}
+	posts, total, err := service.ListPosts(userID, &q)
 	if err != nil {
 		response.Fail(c, errcode.ErrServer)
 		return
 	}
-	response.Success(c, items)
+	response.Success(c, response.Page{
+		List:     posts,
+		Total:    total,
+		Page:     q.Page,
+		PageSize: q.PageSize,
+	})
 }
 
 func GetLostItem(c *gin.Context) {

@@ -24,7 +24,7 @@ func RegisterRoutes(r *gin.Engine) {
 	v1 := r.Group("/api/v1")
 	{
 		v1.POST("/posts", middleware.Auth(), handler.CreatePost)
-		v1.GET("/posts", handler.ListLostItems)
+		v1.GET("/posts", middleware.Auth(), handler.ListPosts)
 		v1.GET("/posts/:id", handler.GetLostItem)
 	}
 }

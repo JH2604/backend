@@ -27,3 +27,16 @@ func FindUserByID(id uint) (*model.User, error) {
 	}
 	return &user, nil
 }
+
+func FindUsersByIDs(ids []uint)([]model.User,error){
+	if len(ids) == 0{
+		return nil,nil
+	}
+	var users []model.User
+	err := db.Where("id IN ?",ids).Find(&users).Error
+	if err != nil{
+		return nil,err
+	}
+	return users,nil
+
+}

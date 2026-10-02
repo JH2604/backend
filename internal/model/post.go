@@ -120,6 +120,7 @@ const (
 	DefaultPage     = 1
 	DefaultPageSize = 20
 	MaxPageSize     = 50
+	DefaultOrder    = "desc"
 )
 
 // 排序字段白名单：只有这两个能用来排序
