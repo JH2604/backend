@@ -18,8 +18,6 @@ var ErrSessionInvalid = errors.New("会话已失效")
 var ErrRefreshTokenInvalid = errors.New("刷新令牌无效")
 var ErrTokenExpired = errors.New("令牌已过期")
 
-
-
 func RegisterUser(username, password string) (*model.User, error) {
 
 	haxi, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -29,7 +27,7 @@ func RegisterUser(username, password string) (*model.User, error) {
 	user := &model.User{
 		Username: username,
 		Password: string(haxi),
-		Role:     model.RoleUser,
+		Role:     model.RoleStudent,
 	}
 	err = repository.CreateUser(user)
 	if err != nil {

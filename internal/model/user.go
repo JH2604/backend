@@ -8,9 +8,8 @@ type RegisterReq struct {
 }
 
 const (
-	RoleUser      = "user"
-	RoleLostAdmin = "lost_admin"
-	RoleSysAdmin  = "sys_admin"
+	RoleStudent = "student"
+	RoleAdmin   = "admin"
 )
 
 type User struct {
@@ -22,8 +21,8 @@ type User struct {
 }
 
 type LoginReq struct {
-	Username   string `json:"username" binding:"max=20,min=3,required"`
-	Password   string `json:"password" binding:"max=32,min=6,required"`
+	Username string `json:"username" binding:"max=20,min=3,required"`
+	Password string `json:"password" binding:"max=32,min=6,required"`
 }
 
 type TokenInfo struct {
