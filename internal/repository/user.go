@@ -18,3 +18,12 @@ func FindByUsername(username string) (model.User, error) {
 	return user, nil
 
 }
+
+func FindUserByID(id uint) (*model.User, error) {
+	var user model.User
+	err := db.Where("id = ?", id).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}

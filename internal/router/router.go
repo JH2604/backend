@@ -15,6 +15,7 @@ func RegisterRoutes(r *gin.Engine) {
 	r.GET("/api/v1/users/me", middleware.Auth(), handler.GetCurrentUser)
 	r.POST("/api/v1/auth/logout",middleware.Auth(),handler.Logout)
 	r.POST("/api/v1/files", middleware.Auth(), handler.UploadPhoto)
+	r.POST("/api/v1/auth/refresh", handler.Refresh)
 
 	// ---------- 你负责的失物招领模块 ----------
 	v1 := r.Group("/api/v1")

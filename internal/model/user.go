@@ -22,8 +22,8 @@ type User struct {
 }
 
 type LoginReq struct {
-	Username string `json:"username" binding:"max=20,min=3,required"`
-	Password string `json:"password" binding:"max=32,min=6,required"`
+	Username   string `json:"username" binding:"max=20,min=3,required"`
+	Password   string `json:"password" binding:"max=32,min=6,required"`
 }
 
 type TokenInfo struct {
@@ -31,4 +31,8 @@ type TokenInfo struct {
 	Username string
 	Role     string
 	SID      string
+}
+
+type RefreshReq struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
 }

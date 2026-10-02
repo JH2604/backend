@@ -95,3 +95,31 @@ func Logout(c *gin.Context) {
 	}
 	response.Success(c, "注销成功")
 }
+
+func Refresh(c *gin.Context) {
+	var req model.RefreshReq
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
+		return
+	}
+
+	access, refresh, err := service.RefreshTokens(req.RefreshToken)
+	if err != nil {
+		if errors.Is(err, service.ErrRefreshTokenInvalid) {
+			response.Fail(c, errcode.ErrRefreshToken)
+			return
+		}
+		response.Fail(c, errcode.ErrServer)
+		fmt.Println("❌", err)
+		return
+	}
+
+	response.Success(c, gin.H{
+		"access_token":       access,
+		"refresh_token":      refresh,
+		"token_type":         "Bearer",
+		"expires_in":         int(service.AccessTokenTTL.Seconds()),
+		"refresh_expires_in": int(service.RefreshTokenTTL.Seconds()),
+	})
+}

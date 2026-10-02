@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
+	"fmt"
 	"gin-demo/internal/model"
 	"gin-demo/internal/repository"
 	"gin-demo/pkg/config"
@@ -131,6 +133,9 @@ func GenerateTokenPair(
 func ValidateToken(tokenStr string) (*model.TokenInfo, error) {
 	info, err := ParseToken(tokenStr)
 	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, ErrTokenExpired
+		}
 		return nil, ErrInvalidToken
 	}
 	hash := sha256Hex(tokenStr)
@@ -148,4 +153,40 @@ func ValidateToken(tokenStr string) (*model.TokenInfo, error) {
 func SessionCancel(sid string) error {
 	return repository.RevokeSession(sid)
 
+}
+
+func RefreshTokens(refreshToken string) (access, refresh string, err error) {
+	hash := sha256Hex(refreshToken)
+	s, err := repository.FindByRefreshHash(hash)
+	if err != nil {
+		s1, err1 := repository.FindByPrevRefreshHash(hash)
+		if err1 != nil {
+			return "", "", ErrRefreshTokenInvalid
+		}
+		repository.RevokeSession(s1.ID)
+		fmt.Println("❌刷新令牌已被使用，撤销会话:", s1.ID)
+		return "", "", ErrRefreshTokenInvalid
+
+	}
+	if s.RevokedAt != nil || time.Now().After(s.RefreshExpiresAt) {
+		return "", "", ErrRefreshTokenInvalid
+	}
+	refreshTokenHash, err := randomBytes(32)
+	if err != nil {
+		return "", "", err
+	}
+	refresh = base64.RawURLEncoding.EncodeToString(refreshTokenHash)
+	user, err := repository.FindUserByID(s.UserID)
+	if err != nil {
+		return "", "", err
+	}
+	access, err = createAccessToken(user, s.ID)
+	if err != nil {
+		return "", "", err
+	}
+	err = repository.RotateTokens(s.ID, hash, sha256Hex(access), sha256Hex(refresh))
+	if err != nil {
+		return "", "", err
+	}
+	return access, refresh, nil
 }

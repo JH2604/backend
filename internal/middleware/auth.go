@@ -26,7 +26,9 @@ func Auth() gin.HandlerFunc {
 		if err != nil {
 			if errors.Is(err, service.ErrSessionInvalid) {
 				response.Fail(c, errcode.ErrSessionInvalid) //40103会话没了，跳登录页
-			} else {
+			}else if errors.Is(err, service.ErrTokenExpired) {
+				response.Fail(c, errcode.ErrTokenTimeout) //40101 令牌过期，刷新令牌
+			}else{
 				response.Fail(c, errcode.ErrNoToken)//40100 令牌本身不行
 			}
 			c.Abort()

@@ -15,6 +15,10 @@ var ErrUserExists = errors.New("用户已存在")
 var ErrInvalidCredentials = errors.New("用户名或密码错误")
 var ErrInvalidToken = errors.New("token 不合法")
 var ErrSessionInvalid = errors.New("会话已失效")
+var ErrRefreshTokenInvalid = errors.New("刷新令牌无效")
+var ErrTokenExpired = errors.New("令牌已过期")
+
+
 
 func RegisterUser(username, password string) (*model.User, error) {
 
