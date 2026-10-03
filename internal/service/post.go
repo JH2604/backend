@@ -11,6 +11,8 @@ import (
 
 var ErrPostNotFound = errors.New("帖子不存在")
 var ErrNotPostOwner = errors.New("不是本人的帖子")
+var ErrNoPermission = errors.New("没有权限")
+
 
 func CreatePost(userID uint, req model.CreatePostReq) (*model.Post, error) {
 	p := &model.Post{
@@ -142,4 +144,22 @@ func GetPost(postID, userID uint, role string) (*model.Post, error) {
 	post.CanChangeStatus = post.IsMine
 	return post,nil
 
+}
+
+func DeletePost(postID,userID uint,role,reason string)error{
+	post,err := repository.GetPostByID(postID)
+	if err != nil {
+    	if errors.Is(err, gorm.ErrRecordNotFound) {
+        	return ErrPostNotFound
+    }
+    return err
+}
+	if post.UserID != userID && role != model.RoleAdmin{
+		return ErrNoPermission
+	}
+	err = repository.SoftDeletePost(postID,reason)
+	if err != nil{
+		return err
+	}
+	return nil
 }
