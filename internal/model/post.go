@@ -49,7 +49,6 @@ type Post struct {
 	// 标记为已找到 / 已认领的时间。进行中为 nil，序列化成 null
 	ClosedAt *time.Time `json:"closed_at"`
 
-
 	//  软删除：删除时不真的 DELETE，而是把 deleted_at 打上时间戳
 	//    GORM 之后所有查询都会自动加上 WHERE deleted_at IS NULL（只查没被删的）
 	//    （所以"已删除的帖子"不会出现在列表/详情里，你一行代码都不用加）
