@@ -50,7 +50,8 @@ func initDB() {
 		sqlDB.SetConnMaxLifetime(time.Hour)
 	}
 
-	err = db.AutoMigrate(&model.Post{}, &model.User{}, &model.Session{})
+	// ⚠️ 关键：这里要改成 model.LostItem
+	err = db.AutoMigrate(&model.Post{}, &model.User{}, &model.Session{}, &model.Message{})
 	if err != nil {
 		panic("❌ 自动建表失败")
 	}
