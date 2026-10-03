@@ -8,6 +8,7 @@ import (
 	"gin-demo/internal/service"
 	"gin-demo/pkg/errcode"
 	"gin-demo/pkg/response"
+	"io"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -110,4 +111,31 @@ func UpdatePostStatus(c *gin.Context) {
 		"status":    post.Status,
 		"closed_at": post.ClosedAt,
 	})
+}
+
+func DeletePost(c *gin.Context) {
+	n, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, errcode.ErrInvalidParams)
+		return
+	}
+	info := middleware.GetTokenInfo(c)
+	var req model.DeletePostReq
+	if err := c.ShouldBindJSON(&req); err != nil && !errors.Is(err, io.EOF) {
+		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
+		return
+	}
+	err = service.DeletePost(uint(n), info.UserID, info.Role, req.Reason)
+	if err != nil {
+		if errors.Is(err, service.ErrPostNotFound) {
+			response.Fail(c, errcode.ErrNotFound)
+		} else if errors.Is(err, service.ErrNoPermission) {
+			response.Fail(c, errcode.ErrPermission)
+		} else {
+			response.Fail(c, errcode.ErrServer)
+		}
+		return
+	}
+	response.SuccessMsg(c, "删除成功", nil)
+
 }
