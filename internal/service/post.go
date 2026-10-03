@@ -29,6 +29,10 @@ func CreatePost(userID uint, req model.CreatePostReq) (*model.Post, error) {
 	if err != nil {
 		return nil, err
 	}
+	p.IsMine = true
+	p.CanDelete = true
+	p.CanChangeStatus = true
+
 	return p, nil
 }
 
