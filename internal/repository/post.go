@@ -57,13 +57,13 @@ func UpdatePostStatus(id uint, status string, closedAt *time.Time) error {
 	}).Error
 }
 
-func SoftDeletePost(id uint,reason string)error{
+func SoftDeletePost(id uint, reason string) error {
 	err := db.Model(&model.Post{}).Where("id = ?", id).Update("delete_reason", reason).Error
-	if err != nil{
-		return  err
+	if err != nil {
+		return err
 	}
 	err = db.Delete(&model.Post{}, id).Error
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	return nil

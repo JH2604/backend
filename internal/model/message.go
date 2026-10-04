@@ -47,3 +47,20 @@ type Message struct {
 	// gorm:"-" → 不建列，由 service 层查出来填进去
 	Peer *UserBrief `gorm:"-" json:"peer,omitempty"`
 }
+
+// MarkReadReq：M5 标记已读的请求体（PUT /messages/read）
+// 三个字段是"三种范围"，优先级 ids > peer_id > all，由 service 层按顺序判断
+type MarkReadReq struct {
+	// 要标记的消息 ID 列表；不传就是空切片，落到下面两个范围
+	// max=500：一次最多 500 条，防止前端误传超大数组拖慢 SQL
+	IDs []uint `json:"ids" binding:"omitempty,max=500"`
+
+	// 对端用户 ID：把"和这个人的会话"里的未读全部标记为已读
+	// 用指针是为了区分"没传"(nil) 和"传了 0"：
+	// 普通 uint 拿不到 null，缺字段和值 0 在 Go 里长得一模一样
+	PeerID *uint `json:"peer_id"`
+
+	// 是否清空当前用户的全部未读
+	// bool 零值天生是 false（= 不是全部），所以不需要指针
+	All bool `json:"all"`
+}

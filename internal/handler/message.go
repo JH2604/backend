@@ -19,6 +19,6 @@ func GetUnreadCount(c *gin.Context) {
 		fmt.Println("❌ 查询未读数失败:", err)
 		return
 	}
-	response.Success(c, gin.H{"unread": count})
+	response.Success(c, gin.H{"total": count})
 
 }
