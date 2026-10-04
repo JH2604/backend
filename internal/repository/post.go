@@ -68,3 +68,11 @@ func SoftDeletePost(id uint, reason string) error {
 	}
 	return nil
 }
+
+func CountPost(userID uint)(number int64,err error){
+	err = db.Model(&model.Post{}).Where("user_id=?",userID).Count(&number).Error
+	if err != nil{
+		return 0,err
+	}
+	return number,nil
+}

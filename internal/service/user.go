@@ -19,24 +19,26 @@ var ErrRefreshTokenInvalid = errors.New("刷新令牌无效")
 var ErrTokenExpired = errors.New("令牌已过期")
 var ErrStudentNotFound = errors.New("没找到学生")
 
-func RegisterUser(studentID, password,role string) (*model.User, error) {
+func RegisterUser(studentID, password, role string) (*model.User, error) {
 	studentID = strings.TrimSpace(studentID)
 	student, err := repository.FindStudent(studentID)
 	if err != nil {
-		if errors.Is(err,gorm.ErrRecordNotFound){
-			return nil,ErrStudentNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrStudentNotFound
 		}
-		return	nil,err
+		return nil, err
 	}
 	haxi, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 	user := &model.User{
-		StudentID: student.StudentID,
-		Password:  string(haxi),
-		Role:      role,
-		Name:      student.StudentName,
+		StudentID:   student.StudentID,
+		Password:    string(haxi),
+		Role:        role,
+		Name:        student.StudentName,
+		Theme:       "light",
+		AllowRemind: true,
 	}
 	err = repository.CreateUser(user)
 	if err != nil {
@@ -90,4 +92,17 @@ func ChangePassword(userID uint, old_password string, newpassword string) error 
 		return err
 	}
 	return nil
+}
+
+func GetUserProfile(userID uint)(*model.User,error){
+	user,err := repository.FindUserByID(userID)
+	if err != nil{
+		return nil,err
+	}
+	count,err := repository.CountPost(userID)
+	if err != nil{
+		return nil,err
+	}
+	user.PostCount = count
+	return user,nil
 }
