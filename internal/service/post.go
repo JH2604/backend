@@ -13,7 +13,6 @@ var ErrPostNotFound = errors.New("帖子不存在")
 var ErrNotPostOwner = errors.New("不是本人的帖子")
 var ErrNoPermission = errors.New("没有权限")
 
-
 func CreatePost(userID uint, req model.CreatePostReq) (*model.Post, error) {
 	p := &model.Post{
 		Type:      req.Type,
@@ -36,7 +35,7 @@ func CreatePost(userID uint, req model.CreatePostReq) (*model.Post, error) {
 	return p, nil
 }
 
-func ListPosts(userID uint, q *model.ListPostsQuery) ([]model.Post, int64, error) {
+func ListPosts(userID uint, q *model.ListPostsQuery) ([]model.PostListItem, int64, error) {
 	if q.Page == 0 {
 		q.Page = model.DefaultPage
 	}
@@ -49,6 +48,12 @@ func ListPosts(userID uint, q *model.ListPostsQuery) ([]model.Post, int64, error
 	if q.PageSize > model.MaxPageSize {
 		q.PageSize = model.MaxPageSize
 	}
+	if q.Type == "all" {
+		q.Type = ""
+	}
+	if q.Status == "all" {
+		q.Status = ""
+	}
 	posts, total, err := repository.ListPosts(*q, userID)
 	if err != nil {
 		return nil, 0, err
@@ -58,8 +63,44 @@ func ListPosts(userID uint, q *model.ListPostsQuery) ([]model.Post, int64, error
 	if err != nil {
 		return nil, 0, err
 	}
+	items := make([]model.PostListItem, 0, len(posts))
+	for _, p := range posts {
+		items = append(items, toListItem(p))
+	}
 
-	return posts, total, nil
+	return items, total, nil
+
+}
+
+// 这个函数给下面的服务
+func contentPreview(s string) string {
+	r := []rune(s)
+	if len(r) <= 60 {
+		return s
+	}
+	return string(r[:60])
+}
+
+func toListItem(p model.Post) model.PostListItem {
+	ContentPreview := contentPreview(p.Content)
+	var cover *string
+	if len(p.Images) > 0 {
+		cover = &p.Images[0]
+	}
+
+	return model.PostListItem{
+		ID:             p.ID,
+		Type:           p.Type,
+		Title:          p.Title,
+		ContentPreview: ContentPreview,
+		CoverURL:       cover,
+		ImageCount:     len(p.Images),
+		Location:       p.Location,
+		Status:         p.Status,
+		Author:         p.Author,
+		CreatedAt:      p.CreatedAt,
+		ClosedAt:       p.ClosedAt,
+	}
 
 }
 
@@ -146,23 +187,23 @@ func GetPost(postID, userID uint, role string) (*model.Post, error) {
 	post.IsMine = post.UserID == userID
 	post.CanDelete = post.IsMine || role == model.RoleAdmin
 	post.CanChangeStatus = post.IsMine
-	return post,nil
+	return post, nil
 
 }
 
-func DeletePost(postID,userID uint,role,reason string)error{
-	post,err := repository.GetPostByID(postID)
+func DeletePost(postID, userID uint, role, reason string) error {
+	post, err := repository.GetPostByID(postID)
 	if err != nil {
-    	if errors.Is(err, gorm.ErrRecordNotFound) {
-        	return ErrPostNotFound
-    }
-    return err
-}
-	if post.UserID != userID && role != model.RoleAdmin{
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrPostNotFound
+		}
+		return err
+	}
+	if post.UserID != userID && role != model.RoleAdmin {
 		return ErrNoPermission
 	}
-	err = repository.SoftDeletePost(postID,reason)
-	if err != nil{
+	err = repository.SoftDeletePost(postID, reason)
+	if err != nil {
 		return err
 	}
 	return nil

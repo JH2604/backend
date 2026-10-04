@@ -19,7 +19,10 @@ func ListPosts(q model.ListPostsQuery, userID uint) ([]model.Post, int64, error)
 
 	}
 	if q.Keyword != "" {
-		query = query.Where("title LIKE ? OR content LIKE ?", "%"+q.Keyword+"%", "%"+q.Keyword+"%")
+		p := "%" + q.Keyword + "%"
+		query = query.Where(
+			"title LIKE ? OR content LIKE ? OR JSON_UNQUOTE(JSON_EXTRACT(location, '$.name')) LIKE ?", p, p, p,
+		)
 
 	}
 	if q.Mine {
@@ -32,9 +35,6 @@ func ListPosts(q model.ListPostsQuery, userID uint) ([]model.Post, int64, error)
 	}
 	var posts []model.Post
 	a := "created_at"
-	if model.PostSortFields[q.SortBy] {
-		a = q.SortBy
-	}
 	err := query.Offset((q.Page - 1) * q.PageSize).Limit(q.PageSize).Order(a + " " + q.Order).Find(&posts).Error
 	if err != nil {
 		return nil, 0, err
@@ -57,13 +57,13 @@ func UpdatePostStatus(id uint, status string, closedAt *time.Time) error {
 	}).Error
 }
 
-func SoftDeletePost(id uint,reason string)error{
+func SoftDeletePost(id uint, reason string) error {
 	err := db.Model(&model.Post{}).Where("id = ?", id).Update("delete_reason", reason).Error
-	if err != nil{
-		return  err
+	if err != nil {
+		return err
 	}
 	err = db.Delete(&model.Post{}, id).Error
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	return nil
