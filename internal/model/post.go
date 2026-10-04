@@ -189,3 +189,10 @@ type PostListItem struct {
 	CreatedAt      time.Time    `json:"created_at"`
 	ClosedAt       *time.Time   `json:"closed_at"`
 }
+
+type PhotoSize struct {
+	URL    string `json:"url"`
+	Width  int    `json:"width"`
+	Height int    `json:"height"`
+	Size   int64  `json:"size"`
+}
