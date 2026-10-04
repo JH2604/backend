@@ -16,6 +16,8 @@ func RegisterRoutes(r *gin.Engine) {
 	r.POST("/api/v1/auth/register", handler.Register) //注册
 	r.POST("/api/v1/auth/login", handler.Login)
 	r.GET("/api/v1/users/me", middleware.Auth(), handler.GetCurrentUser)
+	r.GET("/api/v1/users/admins", middleware.Auth(), handler.ListAdmins)      // U6 管理员列表
+	r.GET("/api/v1/users/:user_id", middleware.Auth(), handler.GetUserPublic) // U7 查看发帖人信息
 	r.POST("/api/v1/auth/logout", middleware.Auth(), handler.Logout)
 	r.POST("/api/v1/files", middleware.Auth(), handler.UploadPhoto)
 	r.POST("/api/v1/auth/refresh", handler.Refresh)
