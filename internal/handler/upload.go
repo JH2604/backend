@@ -11,20 +11,20 @@ import (
 
 func UploadPhoto(c *gin.Context) {
 	fh, err := c.FormFile("file")
-	us := c.PostForm("usage")
-	if us == ""{
-		response.Fail(c,errcode.ErrInvalidParams)
+	usage := c.PostForm("usage")
+	if usage == "" {
+		response.Fail(c, errcode.ErrInvalidParams)
 		return
 	}
-	if us != "avatar" && us != "post"{
-		response.Fail(c,errcode.ErrInvalidParams)
+	if usage != "avatar" && usage != "post" {
+		response.Fail(c, errcode.ErrInvalidParams)
 		return
 	}
 	if err != nil {
 		response.Fail(c, errcode.ErrInvalidParams)
 		return
 	}
-	url, err := service.SavePhoto(fh,us)
+	url, err := service.SavePhoto(fh, usage)
 	if err != nil {
 		if errors.Is(err, service.ErrPhotoTooLarge) {
 			response.Fail(c, errcode.ErrFileTooLarge)
@@ -36,7 +36,6 @@ func UploadPhoto(c *gin.Context) {
 		return
 	}
 
-	
-	response.SuccessCreated(c,url)
+	response.SuccessCreated(c, url)
 
 }
