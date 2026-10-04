@@ -110,7 +110,7 @@ func toListItem(p model.Post) model.PostListItem {
 func toUserBrief(u model.User) model.UserBrief {
 	return model.UserBrief{
 		ID:        u.ID,
-		Name:      u.Username,
+		Name:      u.Name,
 		AvatarURL: "",
 		Role:      u.Role,
 	}

@@ -35,7 +35,6 @@ func createAccessToken(user *model.User, sid string) (string, error) {
 		"jti":      jti,
 		"type":     "access",
 		"iat":      time.Now().Unix(),
-		"username": user.Username,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(config.JWTSecret))
@@ -60,7 +59,6 @@ func ParseToken(tokenStr string) (*model.TokenInfo, error) {
 	}
 	userID := uint(userID1)
 	role, ok := claims["role"].(string)
-	username, _ := claims["username"].(string)
 	type1, _ := claims["type"].(string)
 	sid, _ := claims["sid"].(string)
 	if !ok || type1 != "access" || sid == "" {
@@ -69,7 +67,6 @@ func ParseToken(tokenStr string) (*model.TokenInfo, error) {
 	}
 	return &model.TokenInfo{
 		UserID:   userID,
-		Username: username,
 		Role:     role,
 		SID:      sid,
 	}, nil

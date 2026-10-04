@@ -21,17 +21,25 @@ func Register(c *gin.Context) {
 		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
 		return
 	}
-	user, err := service.RegisterUser(a.Username, a.Password)
+	user, err := service.RegisterUser(a.StudentID, a.Password,a.Role)
 	if err != nil {
 		if errors.Is(err, service.ErrUserExists) {
 			response.Fail(c, errcode.ErrResourceConflict)
 			return
-		}
+		}else if errors.Is(err,service.ErrStudentNotFound){
+			response.Fail(c,errcode.ErrStudentNotFound)
+			return
+		}else{
 		response.Fail(c, errcode.ErrServer)
 		fmt.Println("❌ 注册失败:", err)
 		return
+		}
 	}
-	response.Success(c, user.Username)
+	response.Success(c, gin.H{
+		"userid": user.StudentID,
+		"name":user.Name,
+		"id":user.ID,
+	})
 
 }
 func Login(c *gin.Context) {
@@ -41,7 +49,7 @@ func Login(c *gin.Context) {
 		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
 		return
 	}
-	user1, err := service.LoginUser(b.Username, b.Password)
+	user1, err := service.LoginUser(b.Userid, b.Password)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			response.Fail(c, errcode.ErrBadCredentials)
@@ -73,15 +81,16 @@ func Login(c *gin.Context) {
 		"refresh_expires_in": int(service.RefreshTokenTTL.Seconds()),
 		"user": gin.H{
 			"id":       user1.ID,
-			"username": user1.Username,
+			"userid": user1.StudentID,
 			"role":     user1.Role,
+			"name": user1.Name,
 		},
 	})
 }
 
 func GetCurrentUser(c *gin.Context) {
 	info := middleware.GetTokenInfo(c)
-	response.Success(c, gin.H{"user_id": info.UserID, "username": info.Username, "role": info.Role})
+	response.Success(c, gin.H{"user_id": info.UserID, "role": info.Role})
 
 }
 
