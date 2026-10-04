@@ -17,17 +17,26 @@ var ErrInvalidToken = errors.New("token 不合法")
 var ErrSessionInvalid = errors.New("会话已失效")
 var ErrRefreshTokenInvalid = errors.New("刷新令牌无效")
 var ErrTokenExpired = errors.New("令牌已过期")
+var ErrStudentNotFound = errors.New("没找到学生")
 
-func RegisterUser(username, password string) (*model.User, error) {
-
+func RegisterUser(studentID, password,role string) (*model.User, error) {
+	studentID = strings.TrimSpace(studentID)
+	student, err := repository.FindStudent(studentID)
+	if err != nil {
+		if errors.Is(err,gorm.ErrRecordNotFound){
+			return nil,ErrStudentNotFound
+		}
+		return	nil,err
+	}
 	haxi, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 	user := &model.User{
-		Username: username,
-		Password: string(haxi),
-		Role:     model.RoleStudent,
+		StudentID: student.StudentID,
+		Password:  string(haxi),
+		Role:      role,
+		Name:      student.StudentName,
 	}
 	err = repository.CreateUser(user)
 	if err != nil {
@@ -42,7 +51,7 @@ func RegisterUser(username, password string) (*model.User, error) {
 }
 
 func LoginUser(username, password string) (*model.User, error) {
-	user, err := repository.FindByUsername(username)
+	user, err := repository.FindByStudentID(username)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrInvalidCredentials
