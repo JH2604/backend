@@ -29,6 +29,7 @@ func RegisterRoutes(r *gin.Engine) {
 		v1.PATCH("/posts/:id/status", middleware.Auth(), handler.UpdatePostStatus)
 		v1.DELETE("/posts/:id", middleware.Auth(), handler.DeletePost)
 		v1.GET("/messages/unread-count", middleware.Auth(), handler.GetUnreadCount)
+		v1.PUT("/messages/read", middleware.Auth(), handler.MarkRead)
 	}
 }
 
