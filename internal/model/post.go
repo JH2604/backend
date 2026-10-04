@@ -69,8 +69,6 @@ type Post struct {
 	IsMine          bool `gorm:"-" json:"is_mine"`
 	CanDelete       bool `gorm:"-" json:"can_delete"`
 	CanChangeStatus bool `gorm:"-" json:"can_change_status"`
-
-
 }
 
 // PostLocation 地点对象（JSON 列）
@@ -129,21 +127,15 @@ const (
 	DefaultOrder    = "desc"
 )
 
-// 排序字段白名单：只有这两个能用来排序
-var PostSortFields = map[string]bool{
-	"created_at": true,
-	"event_time": true,
-}
-
 // CreatePostReq：P3 发布帖子
 // 注意没有 UserID —— 作者由服务端从 token 取，前端在物理上无法伪造
 type CreatePostReq struct {
 	Type      string       `json:"type" binding:"required,oneof=lost found"`
-	Title     string       `json:"title" binding:"required,notblank,max=50"`
+	Title     string       `json:"title" binding:"required,notblank,max=30"`
 	Content   string       `json:"content" binding:"required,notblank,max=1000"`
 	Images    []string     `json:"images" binding:"omitempty,max=9"`
 	Location  PostLocation `json:"location" binding:"required"`
-	EventTime *time.Time    `json:"event_time"` // RFC3339
+	EventTime *time.Time   `json:"event_time"` // RFC3339
 }
 
 // DeletePostReq：P4 删除（可选请求体）
@@ -173,15 +165,27 @@ type ListPostsQuery struct {
 	//pagesize:一页显示多少条数据，最少1最多50
 	PageSize int `form:"page_size" binding:"omitempty,gte=1,lte=50"`
 	//type:筛选帖子类型
-	Type string `form:"type" binding:"omitempty,oneof=lost found"`
+	Type string `form:"type" binding:"omitempty,oneof=all lost found"`
 	//keyword:按照哪个关键词筛选
 	Keyword string `form:"keyword" binding:"omitempty,max=50"`
 	//mine是否只看自己发的帖子
 	Mine bool `form:"mine"`
 	//status:open和close的状态筛选
-	Status string `form:"status" binding:"omitempty,oneof=open closed"`
-	//SortBy:按照发帖时间还是丢失/捡到时间排序
-	SortBy string `form:"sort_by" binding:"omitempty,oneof=created_at event_time"`
+	Status string `form:"status" binding:"omitempty,oneof=all open closed"`
 	//order:升序/降序
 	Order string `form:"order" binding:"omitempty,oneof=asc desc"`
+}
+
+type PostListItem struct {
+	ID             uint         `json:"id"`
+	Type           string       `json:"type"`
+	Title          string       `json:"title"`
+	ContentPreview string       `json:"content_preview"`
+	CoverURL       *string      `json:"cover_url"`
+	ImageCount     int          `json:"image_count"`
+	Location       PostLocation `json:"location"`
+	Status         string       `json:"status"`
+	Author         *UserBrief   `json:"author,omitempty"`
+	CreatedAt      time.Time    `json:"created_at"`
+	ClosedAt       *time.Time   `json:"closed_at"`
 }

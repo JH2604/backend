@@ -12,6 +12,7 @@ import (
 var ErrPostNotFound = errors.New("帖子不存在")
 var ErrNotPostOwner = errors.New("不是本人的帖子")
 var ErrNoPermission = errors.New("没有权限")
+var ErrOldPasswordWrong = errors.New("原密码错误")
 
 func CreatePost(userID uint, req model.CreatePostReq) (*model.Post, error) {
 	p := &model.Post{

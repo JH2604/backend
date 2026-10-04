@@ -35,3 +35,9 @@ type TokenInfo struct {
 type RefreshReq struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
+
+type PasswordChange struct {
+	OldPassword string `json:"old_password" binding:"required"`
+	NewPassword string `json:"new_password" binding:"max=32,min=6,required"`
+}
+
