@@ -23,13 +23,14 @@ func RegisterRoutes(r *gin.Engine) {
 	// ---------- 你负责的失物招领模块 ----------
 	v1 := r.Group("/api/v1")
 	{
-		v1.POST("/posts", middleware.Auth(), handler.CreatePost)
+		v1.POST("/auth/post", middleware.Auth(), handler.CreatePost)
 		v1.GET("/posts", middleware.Auth(), handler.ListPosts)
 		v1.GET("/posts/:id", middleware.Auth(), handler.GetPost)
 		v1.PATCH("/posts/:id/status", middleware.Auth(), handler.UpdatePostStatus)
 		v1.DELETE("/posts/:id", middleware.Auth(), handler.DeletePost)
 		v1.GET("/messages/unread-count", middleware.Auth(), handler.GetUnreadCount)
 		v1.PUT("/messages/read", middleware.Auth(), handler.MarkRead)
+		v1.PUT("/users/me/password", middleware.Auth(), handler.ChangePassword)
 	}
 }
 

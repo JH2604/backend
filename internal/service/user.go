@@ -17,17 +17,28 @@ var ErrInvalidToken = errors.New("token 不合法")
 var ErrSessionInvalid = errors.New("会话已失效")
 var ErrRefreshTokenInvalid = errors.New("刷新令牌无效")
 var ErrTokenExpired = errors.New("令牌已过期")
+var ErrStudentNotFound = errors.New("没找到学生")
 
-func RegisterUser(username, password string) (*model.User, error) {
-
+func RegisterUser(studentID, password, role string) (*model.User, error) {
+	studentID = strings.TrimSpace(studentID)
+	student, err := repository.FindStudent(studentID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrStudentNotFound
+		}
+		return nil, err
+	}
 	haxi, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 	user := &model.User{
-		Username: username,
-		Password: string(haxi),
-		Role:     model.RoleStudent,
+		StudentID:   student.StudentID,
+		Password:    string(haxi),
+		Role:        role,
+		Name:        student.StudentName,
+		Theme:       "light",
+		AllowRemind: true,
 	}
 	err = repository.CreateUser(user)
 	if err != nil {
@@ -42,7 +53,7 @@ func RegisterUser(username, password string) (*model.User, error) {
 }
 
 func LoginUser(username, password string) (*model.User, error) {
-	user, err := repository.FindByUsername(username)
+	user, err := repository.FindByStudentID(username)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrInvalidCredentials
@@ -55,4 +66,43 @@ func LoginUser(username, password string) (*model.User, error) {
 	}
 	return &user, nil
 
+}
+
+// 修改密码函数
+func ChangePassword(userID uint, old_password string, newpassword string) error {
+	user, err := repository.FindUserByID(userID)
+	if err != nil {
+		return err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(old_password))
+	if err != nil {
+		return ErrOldPasswordWrong
+
+	}
+	new_password, err := bcrypt.GenerateFromPassword([]byte(newpassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	err = repository.SavePassword(user.ID, string(new_password))
+	if err != nil {
+		return err
+	}
+	err = repository.RevokeAllSessionsForUser(user.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetUserProfile(userID uint)(*model.User,error){
+	user,err := repository.FindUserByID(userID)
+	if err != nil{
+		return nil,err
+	}
+	count,err := repository.CountPost(userID)
+	if err != nil{
+		return nil,err
+	}
+	user.PostCount = count
+	return user,nil
 }
