@@ -123,3 +123,26 @@ func Refresh(c *gin.Context) {
 		"refresh_expires_in": int(service.RefreshTokenTTL.Seconds()),
 	})
 }
+
+// 修改密码
+func ChangePassword(c *gin.Context) {
+	var user model.PasswordChange
+	err := c.ShouldBindJSON(&user)
+	if err != nil {
+		response.Fail(c, errcode.ErrInvalidParams)
+		return
+	}
+	userID := middleware.GetUserID(c)
+	err = service.ChangePassword(userID, user.OldPassword, user.NewPassword)
+	if err != nil {
+		if errors.Is(err, service.ErrOldPasswordWrong) {
+			response.Fail(c, errcode.ErrOldPassword)
+			return
+		}
+		response.Fail(c, errcode.ErrServer)
+		fmt.Println("❌", err)
+		return
+	}
+	response.SuccessMsg(c, "密码已修改，请重新登陆", nil)
+
+}

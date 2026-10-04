@@ -56,3 +56,29 @@ func LoginUser(username, password string) (*model.User, error) {
 	return &user, nil
 
 }
+
+// 修改密码函数
+func ChangePassword(userID uint, old_password string, newpassword string) error {
+	user, err := repository.FindUserByID(userID)
+	if err != nil {
+		return err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(old_password))
+	if err != nil {
+		return ErrOldPasswordWrong
+
+	}
+	new_password, err := bcrypt.GenerateFromPassword([]byte(newpassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	err = repository.SavePassword(user.ID, string(new_password))
+	if err != nil {
+		return err
+	}
+	err = repository.RevokeAllSessionsForUser(user.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}

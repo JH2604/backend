@@ -40,3 +40,9 @@ func FindUsersByIDs(ids []uint)([]model.User,error){
 	return users,nil
 
 }
+
+
+// 存新密码函数
+func SavePassword(userID uint,newpassword string) error {
+	return db.Model(&model.User{}).Where("id=?", userID).Update("password",newpassword).Error
+}

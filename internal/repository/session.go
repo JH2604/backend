@@ -41,6 +41,7 @@ func RevokeSession(id string) error {
 	return db.Model(&model.Session{}).Where("id = ?", id).Update("revoked_at", time.Now()).Error
 }
 
+//吊销用户会话
 func RevokeAllSessionsForUser(userID uint) error {
 	return db.Model(&model.Session{}).Where("user_id = ?", userID).Update("revoked_at", time.Now()).Error
 }
@@ -52,3 +53,4 @@ func RotateTokens(id, oldRefreshHash, newAccessHash, newRefreshHash string) erro
 		"prev_refresh_hash":  oldRefreshHash,
 	}).Error
 }
+
