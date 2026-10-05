@@ -8,6 +8,7 @@ import (
 	"gin-demo/internal/service"
 	"gin-demo/pkg/errcode"
 	"gin-demo/pkg/response"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -94,4 +95,82 @@ func ListMessages(c *gin.Context) {
 		Page:     q.Page,
 		PageSize: q.PageSize,
 	})
+}
+
+// SendMessage：M3 发送私信（POST /messages）
+// handler 只做三件事：① 从 token 拿"我是谁" ② 把 JSON 装进 req ③ 把结果翻译成响应
+func SendMessage(c *gin.Context) {
+	// ① 身份从 token 来 —— 请求体里没有 sender_id，前端伪造不了
+	userID := middleware.GetUserID(c)
+
+	// ② 解析请求体：receiver_id 必填、content 必填且不能是纯空白，全靠 binding 标签管
+	var req model.SendMessageReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
+		return
+	}
+
+	// ③ 交给 service，拿回 (落库的私信, 提醒结果)
+	m, remind, err := service.SendMessage(userID, req)
+	if err != nil {
+		// 认错：把 service 的业务错误翻译成给前端的错误码
+		switch {
+		case errors.Is(err, service.ErrUserNotFound):
+			// 收信人不存在
+			response.Fail(c, errcode.ErrNotFound)
+		case errors.Is(err, service.ErrSelfMessage):
+			response.FailReason(c, errcode.ErrInvalidParams, "不能给自己发私信")
+		default:
+			response.Fail(c, errcode.ErrServer)
+			fmt.Println("❌ 发送私信失败:", err)
+		}
+		return
+	}
+
+	// ④ 成功：私信永远 201 —— 提醒成没成都不影响这一条，只看 data.remind
+	response.SuccessCreated(c, model.SendMessageData{
+		Message: model.MessageView{
+			ID:        m.ID,
+			Direction: model.MessageDirectionSent, // 刚发出去的，方向恒为 sent
+			Content:   m.Content,
+			IsRead:    m.IsRead, // 刚发出来必然是 false，对方还没看
+			Reminded:  m.Reminded,
+			CreatedAt: m.CreatedAt,
+		},
+		Remind: remind,
+	})
+}
+
+// GetConversation：M4 与某用户的私信记录（GET /messages/conversations/:peer_id）
+func GetConversation(c *gin.Context) {
+	// ① 身份从 token 来
+	userID := middleware.GetUserID(c)
+
+	// ② 路径参数：字符串 → 数字，转不动或者传了 0 都算参数错误
+	peerID, err := strconv.ParseUint(c.Param("peer_id"), 10, 64)
+	if err != nil || peerID == 0 {
+		response.Fail(c, errcode.ErrInvalidParams)
+		return
+	}
+
+	// ③ 解析 query 参数：?before_id=&limit=&mark_read=
+	//    gte / lte 在这里生效，limit 传 999 直接 40000，不用进 service 再拦
+	var q model.ConversationQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
+		return
+	}
+
+	// ④ 交给 service。返回值直接就是契约里的 data（peer / can_remind / list / has_more）
+	result, err := service.ListConversation(userID, uint(peerID), &q)
+	if err != nil {
+		if errors.Is(err, service.ErrUserNotFound) {
+			response.Fail(c, errcode.ErrNotFound)
+			return
+		}
+		response.Fail(c, errcode.ErrServer)
+		fmt.Println("❌ 查询会话失败:", err)
+		return
+	}
+	response.Success(c, result)
 }

@@ -144,3 +144,105 @@ type MessageListItem struct {
 
 	CreatedAt time.Time `json:"created_at"`
 }
+
+// ============ M3 发送私信（POST /messages）============
+
+// SendMessageReq：M3 的请求体。
+// 没有 sender_id —— 发送者由服务端从 token 取，前端物理上伪造不了
+type SendMessageReq struct {
+	// ReceiverID：收信人，必填
+	ReceiverID uint `json:"receiver_id" binding:"required"`
+
+	// Content：正文。notblank 是 router.init() 里注册的自定义规则，
+	// 专治"看着非空、其实全是空格"的值
+	// （文档没给长度上限，这里按 P3 正文的口径取 1000，防止有人塞超长文本）
+	Content string `json:"content" binding:"required,notblank,max=1000"`
+
+	// PostID：从帖子详情页发起时携带；不传 → nil → 数据库存 NULL。
+	// 为什么用指针：普通 uint 的零值 0 会被误读成"关联了 id=0 的帖子"，
+	// 前端也会拿到 0 而不是 null
+	PostID *uint `json:"post_id"`
+
+	// Remind：是否额外通过对方的手机号（优先）/ 邮箱发提醒。
+	// bool 零值天生是 false，正好等于"不提醒"，所以不需要指针
+	Remind bool `json:"remind"`
+}
+
+// MessageView：消息出网关的统一视图。
+// M3 的 data.message 和 M4 的 list 项，契约里字段完全一致（就这 6 个），所以共用一份。
+// 和 MessageListItem 的区别：这里没有 peer / post —— M3 是我刚从会话里发出，
+// M4 的 peer 已经在 data 顶层给了，单条消息不用再重复一遍对方是谁
+type MessageView struct {
+	ID        uint      `json:"id"`
+	Direction string    `json:"direction"` // MessageDirectionSent / Received
+	Content   string    `json:"content"`
+	IsRead    bool      `json:"is_read"`
+	Reminded  bool      `json:"reminded"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// 提醒结局的三个枚举维度（文档原文，集中定义，写错编译器会提醒）
+const (
+	RemindStatusSent    = "sent"    // 已投递
+	RemindStatusSkipped = "skipped" // 压根没发（没请求 / 没地址 / 被限流）
+	RemindStatusFailed  = "failed"  // 发起了但通道侧报错
+
+	RemindChannelSMS   = "sms"   // 手机优先
+	RemindChannelEmail = "email" // 其次邮箱
+
+	RemindReasonNotRequested = "not_requested"  // 本次没开提醒
+	RemindReasonNoContact    = "no_contact"     // 对方手机、邮箱都没绑
+	RemindReasonDisabled     = "disabled"       // 对方关了自己的提醒开关
+	RemindReasonRateLimited  = "rate_limited"   // 撞上限流
+	RemindReasonProviderErr  = "provider_error" // 通道侧报错
+)
+
+// RemindResult：M3 的 data.remind。
+// status=sent 时 reason 留空串（枚举里没有"成功"这个 reason，硬塞一个反而不合契约）；
+// status=skipped/failed 时 channel 留空串（通道压根没选上，没有渠道可报）
+type RemindResult struct {
+	Status  string `json:"status"`
+	Channel string `json:"channel"`
+	Reason  string `json:"reason"`
+}
+
+// SendMessageData：M3 的 data
+type SendMessageData struct {
+	Message MessageView  `json:"message"`
+	Remind  RemindResult `json:"remind"`
+}
+
+// ============ M4 与某用户的私信记录（GET /messages/conversations/:peer_id）============
+
+// ConversationQuery：M4 的 query 参数。
+// ⚠️ 这个接口走的是【游标分页】，不是 M2 / P1 那套 page + page_size：
+// 聊天记录会不断变长，用页码翻页时只要来了新消息，页码就会整体错位
+type ConversationQuery struct {
+	// BeforeID：只加载这条消息【之前】的记录；不传表示从最新一条往回翻。
+	// 指针区分"没传"(nil) 和"传了 0"—— 0 不是合法消息 ID，不该被当成游标
+	BeforeID *uint `form:"before_id"`
+
+	// Limit：一次拉几条。不传用 20，上限 50，和列表接口共用同一套边界
+	Limit int `form:"limit" binding:"omitempty,gte=1,lte=50"`
+
+	// MarkRead：顺手把"对方发给我的"未读标记为已读。
+	// bool 零值天生是 false = 不标记，所以不需要指针
+	MarkRead bool `form:"mark_read"`
+}
+
+// ConversationResult：M4 的 data
+type ConversationResult struct {
+	// Peer：聊天的对方（契约里只有 id / name / avatar_url / role）
+	Peer UserBrief `json:"peer"`
+
+	// CanRemind：我能不能给这个人发提醒 —— 规则和 U7 的 can_remind 完全一样，
+	// 共用 service 层的 canRemind()，避免两处规则各写一遍以后改漏
+	CanRemind bool `json:"can_remind"`
+
+	// List：按时间【正序】（老的在前）。注意和 M2 列表的倒序相反 ——
+	// 聊天窗口是从上往下读的，最新的一条在最底下
+	List []MessageView `json:"list"`
+
+	// HasMore：还有更早的记录没加载完 → 前端继续往上翻
+	HasMore bool `json:"has_more"`
+}

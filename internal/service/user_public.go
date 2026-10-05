@@ -63,8 +63,10 @@ func GetUserPublic(targetID uint, viewerRole string) (*model.UserPublic, error) 
 		PostCount: count,
 		// 同 U6：暂无黑名单，恒 true
 		CanMessage: true,
-		// 对方自己关了提醒开关、或者手机邮箱都没绑 → 提醒不了
-		CanRemind: user.AllowRemind && (user.Phone != "" || user.Email != ""),
+		// 对方自己关了提醒开关、或者手机邮箱都没绑 → 提醒不了。
+		// 规则抽到了 service/remind.go 的 canRemind()，和 M4 的 can_remind 共用一份，
+		// 以后改规则只改那一个函数，两个接口自动同步
+		CanRemind: canRemind(user),
 	}
 
 	// ★ 关键的一刀：只有管理员才填 Detail。
