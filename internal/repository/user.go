@@ -28,7 +28,9 @@ func FindUserByID(id uint) (*model.User, error) {
 	return &user, nil
 }
 
+// FindUsersByIDs：按 ID 批量取用户。列表里批量拼作者 / 对端用，避免"一条一条查"
 func FindUsersByIDs(ids []uint) ([]model.User, error) {
+	// 空列表没必要查（GORM 会拼成 id IN (NULL)，一行也匹配不到）
 	if len(ids) == 0 {
 		return nil, nil
 	}

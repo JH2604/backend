@@ -50,6 +50,22 @@ func GetPostByID(id uint) (*model.Post, error) {
 	}
 	return &post, nil
 }
+
+// FindPostsByIDs：按 ID 批量取帖子，给消息列表的 post 简介用
+func FindPostsByIDs(ids []uint) ([]model.Post, error) {
+	// 空列表没必要查（GORM 会拼成 id IN (NULL)，一行也匹配不到）
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var posts []model.Post
+	// 只取 id/title（Content 是 TEXT，不用拖出来）；软删除的帖子会被自动过滤
+	err := db.Select("id", "title").Where("id IN ?", ids).Find(&posts).Error
+	if err != nil {
+		return nil, err
+	}
+	return posts, nil
+}
+
 func UpdatePostStatus(id uint, status string, closedAt *time.Time) error {
 	return db.Model(&model.Post{}).Where("id = ?", id).Updates(map[string]interface{}{
 		"status":    status,
@@ -69,10 +85,10 @@ func SoftDeletePost(id uint, reason string) error {
 	return nil
 }
 
-func CountPost(userID uint)(number int64,err error){
-	err = db.Model(&model.Post{}).Where("user_id=?",userID).Count(&number).Error
-	if err != nil{
-		return 0,err
+func CountPost(userID uint) (number int64, err error) {
+	err = db.Model(&model.Post{}).Where("user_id=?", userID).Count(&number).Error
+	if err != nil {
+		return 0, err
 	}
-	return number,nil
+	return number, nil
 }

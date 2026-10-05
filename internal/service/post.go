@@ -111,7 +111,7 @@ func toUserBrief(u model.User) model.UserBrief {
 	return model.UserBrief{
 		ID:        u.ID,
 		Name:      u.Name,
-		AvatarURL: "",
+		AvatarURL: u.AvatarURL,
 		Role:      u.Role,
 	}
 }

@@ -14,12 +14,11 @@ type Post struct {
 
 	// 作者 ID → users.id。由服务端从 token 取，前端不许传
 	// index：以后"某用户发的帖子"（P6 / mine=true）会走索引
-	// index: 以后"某用户发的帖子"（P6 / mine=true）会走索引
 	UserID uint `gorm:"index;not null" json:"user_id"`
 
 	// 类型：lost(失物) / found(拾物)。
-	//size确保索引不会太长，避免查找时爆炸
-	Type string `gorm:"size:10;index;not null"json:"type"`
+	// size 限制长度，确保索引不会太长，避免查找时爆炸
+	Type string `gorm:"size:10;index;not null" json:"type"`
 
 	// 标题
 	Title string `gorm:"size:100;not null" json:"title"`
@@ -88,7 +87,7 @@ type PostLocation struct {
 type UserBrief struct {
 	ID        uint   `json:"id"`
 	Name      string `json:"name"`       // 对应 User.Username
-	AvatarURL string `json:"avatar_url"` // 现在还没有头像字段，先留空
+	AvatarURL string `json:"avatar_url"` // 取 User.AvatarURL（该字段在 model/user.go 里已有）
 
 	//role对应不同权限
 	Role string `json:"role"`
