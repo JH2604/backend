@@ -87,7 +87,7 @@ type PostLocation struct {
 type UserBrief struct {
 	ID        uint   `json:"id"`
 	Name      string `json:"name"`       // 对应 User.Username
-	AvatarURL string `json:"avatar_url"` // 现在还没有头像字段，先留空
+	AvatarURL string `json:"avatar_url"` // 取 User.AvatarURL（该字段在 model/user.go 里已有）
 
 	//role对应不同权限
 	Role string `json:"role"`
