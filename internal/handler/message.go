@@ -63,3 +63,35 @@ func MarkRead(c *gin.Context) {
 		"unread_total": unreadTotal,
 	})
 }
+
+// ListMessages：M2 我的消息列表（GET /messages）
+// handler 只做两件事：① 把 query 参数装进 q ② 把 (列表, 总数) 塞进统一分页响应
+func ListMessages(c *gin.Context) {
+	// ① 身份从 token 来
+	userID := middleware.GetUserID(c)
+
+	// ② 解析 query 参数：?box=&is_read=&page=&page_size=
+	//    结构体 binding 标签里的 oneof / gte / lte 在这里生效，传了非法值直接 40000
+	var q model.MessageListQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
+		return
+	}
+
+	// ③ 交给 service。它会把 q.Page / q.PageSize 补成"实际生效的值"，
+	//    所以下面回显的必须是 q 里的值（前端才知道真实生效的是第几页几条）
+	messages, total, err := service.ListMessages(userID, &q)
+	if err != nil {
+		response.Fail(c, errcode.ErrServer)
+		fmt.Println("❌ 查询消息列表失败:", err)
+		return
+	}
+
+	// ④ 分页外壳和 P1 的 /posts 共用同一个 response.Page
+	response.Success(c, response.Page{
+		List:     messages,
+		Total:    total,
+		Page:     q.Page,
+		PageSize: q.PageSize,
+	})
+}

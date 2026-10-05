@@ -1,8 +1,11 @@
 package repository
 
 import (
-	"gin-demo/internal/model"
 	"time"
+
+	"gin-demo/internal/model"
+
+	"gorm.io/gorm"
 )
 
 func CountUnread(receiverID uint) (int64, error) {
@@ -59,4 +62,53 @@ func MarkRead(receiverID uint, ids []uint, peerID *uint, all bool) (int64, error
 	// RowsAffected = 真正被改动的行数，service 拿它当 updated 返回给前端
 	// 必须先用 result 接住再分字段取，写成 .Updates(...).Error 就把行数丢了
 	return result.RowsAffected, result.Error
+}
+
+// ListMessages：M2 —— 我的消息列表（GET /messages）
+// 返回 (当页消息, 总条数, error)
+//
+// 约定：q.Page / q.PageSize 由 service 层补默认值，这里不补
+// （PageSize 为 0 会拼出 LIMIT 0，列表永远是空的）
+// direction / peer / post 这些给前端看的字段由 service 层拼装，这里只返回实体
+func ListMessages(q model.MessageListQuery, userID uint) ([]model.Message, int64, error) {
+	// ① 哪些消息算我的：三个 box 取值 = 三种 WHERE
+	query := db.Model(&model.Message{})
+	switch q.Box {
+	case model.MessageBoxSent:
+		query = query.Where("sender_id = ?", userID)
+	case model.MessageBoxReceived:
+		query = query.Where("receiver_id = ?", userID)
+	default:
+		// box 空串 或 all：我发的 + 我收的
+		// OR 必须写在同一个字符串里（GORM 才会加括号）。
+		// 拆成两个 Where 会变成 sender_id = ? OR (receiver_id = ? AND is_read = ?)，
+		// 我发出的消息就绕过了 is_read 筛选
+		query = query.Where("sender_id = ? OR receiver_id = ?", userID, userID)
+	}
+
+	// ② is_read：nil = 没传这个参数（不筛）；非 nil 才按 true/false 筛
+	// 用 *bool 就是为了区分"没传"和"传了 false"
+	if q.IsRead != nil {
+		query = query.Where("is_read = ?", *q.IsRead)
+	}
+
+	// ③ total：符合条件的总条数（不是当页条数）
+	// Session(&gorm.Session{}) 克隆一份去 COUNT，避免影响下面的 query
+	var total int64
+	if err := query.Session(&gorm.Session{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// ④ 当页数据：created_at 倒序（最新在前），再加 id 倒序防同一秒的消息乱序
+	var messages []model.Message
+	err := query.
+		Order("created_at DESC, id DESC").
+		Offset((q.Page - 1) * q.PageSize).
+		Limit(q.PageSize).
+		Find(&messages).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return messages, total, nil
 }
