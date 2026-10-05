@@ -113,36 +113,24 @@ func ListMessages(q model.MessageListQuery, userID uint) ([]model.Message, int64
 	return messages, total, nil
 }
 
-// CreateMessage：M3 —— 落库一条私信。
-// Reminded 由 service 层算好一起写进来（提醒成功才为 true），
-// 所以这里不需要再单独 UPDATE 一次
+// CreateMessage 落库一条私信（Reminded 由 service 算好后一起写入）
 func CreateMessage(m *model.Message) error {
 	return db.Create(m).Error
 }
 
-// ListConversation：M4 —— 我和某个人的往来私信，游标分页
-// 返回 (这一页的消息, 是否还有更早的, error)
-//
-// 约定：limit 由 service 层补好默认值 / 封顶，这里不补
-// （Limit 为 0 会拼出 LIMIT 0，列表永远是空的）
-// direction / peer / can_remind 这些给前端看的字段由 service 层拼装，这里只返回实体
+// ListConversation 会话内的私信，游标分页；返回 (倒序结果, 是否还有更早, error)
+// limit 的默认值与封顶由 service 负责
 func ListConversation(userID, peerID uint, beforeID *uint, limit int) ([]model.Message, bool, error) {
-	// ① 哪些算"这个会话"：我→他 或 他→我。
-	//    ★ 整个双向条件必须用一对括号包住 —— 后面还要 AND 上游标条件，
-	//    漏了括号会变成 "我→他 OR (他→我 AND id < ?)"，
-	//    前半段就绕过了游标，翻页时会重复吐出已经看过的老消息
+	// 双向条件必须整体加括号，否则游标只作用于后半个 OR，翻页会重复
 	query := db.Model(&model.Message{}).
 		Where("(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)",
 			userID, peerID, peerID, userID)
 
-	// ② 游标：只要这条消息【之前】的。
-	//    按 id 而不是 created_at 比 —— id 自增，顺序天然等价于时间顺序，
-	//    而且 before_id 传的就是 id，两者同一把尺子，不会错位
 	if beforeID != nil {
 		query = query.Where("id < ?", *beforeID)
 	}
 
-	// ③ 倒序多取 1 条当"探针"：取回 limit+1 条就说明还有更早的
+	// 多取 1 条判断是否还有更早的，该条不返回
 	var messages []model.Message
 	if err := query.Order("id DESC").Limit(limit + 1).Find(&messages).Error; err != nil {
 		return nil, false, err
@@ -150,16 +138,12 @@ func ListConversation(userID, peerID uint, beforeID *uint, limit int) ([]model.M
 
 	hasMore := len(messages) > limit
 	if hasMore {
-		// 探针那条不返回给前端，它只是用来判断 has_more 的
 		messages = messages[:limit]
 	}
-	// 注意：这里返回的是【倒序】。翻转成正序是 service 层的事 ——
-	// 游标用倒序好写，给前端看要用正序，两边各用顺手的顺序
-	return messages, hasMore, nil
+	return messages, hasMore, nil // 倒序，翻正序在 service 做
 }
 
-// CountRemindedTo：M3 限流用 —— 从 since 起，"我发给这个人"的私信里成功提醒过几次。
-// 限流记录直接落在 messages 表上（reminded 列），不用额外建限流表
+// CountRemindedTo 统计 since 起我成功提醒过该用户的次数（限流用）
 func CountRemindedTo(senderID, receiverID uint, since time.Time) (int64, error) {
 	var count int64
 	err := db.Model(&model.Message{}).
@@ -169,8 +153,7 @@ func CountRemindedTo(senderID, receiverID uint, since time.Time) (int64, error) 
 	return count, err
 }
 
-// CountRemindedForReceiver：M3 限流用 —— 从 since 起，这个人总共被提醒过几次
-// （不管是谁触发的，只认"他这一天被吵了几回"）
+// CountRemindedForReceiver 统计 since 起该用户被成功提醒的总次数（限流用）
 func CountRemindedForReceiver(receiverID uint, since time.Time) (int64, error) {
 	var count int64
 	err := db.Model(&model.Message{}).

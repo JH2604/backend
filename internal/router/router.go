@@ -42,10 +42,9 @@ func RegisterRoutes(r *gin.Engine) {
 		v1.GET("/messages", middleware.Auth(), handler.ListMessages)                // M2 我的消息列表：方向/对端/关联帖子 + 筛选分页
 		v1.GET("/messages/unread-count", middleware.Auth(), handler.GetUnreadCount) // M1 未读总数（前端红点用）
 		v1.PUT("/messages/read", middleware.Auth(), handler.MarkRead)               // M5 标记已读：按 ids / peer_id / all 三种范围
-		v1.POST("/messages", middleware.Auth(), handler.SendMessage)                // M3 发送私信：可选短信/邮件提醒（12h/人 1 次、每人每天 5 次）
-		// ★ M4 路径必须是 /messages/conversations/:peer_id，不能写成 /messages/:peer_id ——
-		// 后者会和上面 M1 的 /messages/unread-count 抢同一层通配符，gin 启动直接 panic
-		v1.GET("/messages/conversations/:peer_id", middleware.Auth(), handler.GetConversation) // M4 与某用户的私信记录：游标分页、时间正序
+		v1.POST("/messages", middleware.Auth(), handler.SendMessage)                // M3 发送私信（可选提醒）
+		// M4 路径不能写成 /messages/:peer_id —— 会和 M1 的 /messages/unread-count 冲突，gin 启动即 panic
+		v1.GET("/messages/conversations/:peer_id", middleware.Auth(), handler.GetConversation) // M4 与某用户的私信记录（游标分页）
 
 		// ---- 改密码：功能属用户模块，但接口是我在这个组里实现的 ----
 		v1.PUT("/users/me/password", middleware.Auth(), handler.ChangePassword) // U3 改密码（成功后吊销全部会话，要重新登录）
