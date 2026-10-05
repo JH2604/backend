@@ -29,6 +29,7 @@ func ListAdmins(c *gin.Context) {
 func GetUserPublic(c *gin.Context) {
 	// ① 路径参数拿到的永远是字符串，先转成数字；
 	//    转不动、或者传了 0，都算参数错误
+	//__`10`__ = 十进制（不是十六进制），__`64`__ = 最长 64 位（超了就报错）
 	id, err := strconv.ParseUint(c.Param("user_id"), 10, 64)
 	if err != nil || id == 0 {
 		response.Fail(c, errcode.ErrInvalidParams)

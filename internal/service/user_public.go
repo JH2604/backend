@@ -12,7 +12,7 @@ import (
 // ErrUserNotFound：U7 要看的人不存在 → handler 翻译成 40400
 var ErrUserNotFound = errors.New("用户不存在")
 
-// ListAdmins：U6「联系管理员」
+// ListAdmins：U6「联系管理员」，List = "整理成给业务用的列表"
 func ListAdmins() ([]model.AdminBrief, error) {
 	users, err := repository.FindAdmins()
 	if err != nil {
@@ -20,7 +20,9 @@ func ListAdmins() ([]model.AdminBrief, error) {
 	}
 	// 这里用 make(..., 0, len(users)) 而不是 var list []model.AdminBrief：
 	// 空切片序列化成 []，nil 切片序列化成 null —— 前端要的是 []
+	//如果用var list []model.AdminBrief，返回null与文档要求的【】不符
 	list := make([]model.AdminBrief, 0, len(users))
+	//手写字段映射，裁剪拼装dto，防止泄漏敏感信息
 	for _, u := range users {
 		list = append(list, model.AdminBrief{
 			ID:        u.ID,
@@ -52,7 +54,7 @@ func GetUserPublic(targetID uint, viewerRole string) (*model.UserPublic, error) 
 	if err != nil {
 		return nil, err
 	}
-
+	//组装DTO
 	out := &model.UserPublic{
 		ID:        user.ID,
 		Name:      user.Name,
