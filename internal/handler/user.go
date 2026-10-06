@@ -21,24 +21,28 @@ func Register(c *gin.Context) {
 		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
 		return
 	}
-	user, err := service.RegisterUser(a.StudentID, a.Password,a.Role)
+	user, err := service.RegisterUser(a.StudentID, a.Password, a.Role)
 	if err != nil {
 		if errors.Is(err, service.ErrUserExists) {
 			response.Fail(c, errcode.ErrResourceConflict)
 			return
-		}else if errors.Is(err,service.ErrStudentNotFound){
-			response.Fail(c,errcode.ErrStudentNotFound)
+		} else if errors.Is(err, service.ErrStudentNotFound) {
+			response.Fail(c, errcode.ErrStudentNotFound)
 			return
-		}else{
-		response.Fail(c, errcode.ErrServer)
-		fmt.Println("❌ 注册失败:", err)
-		return
+		} else if errors.Is(err, service.ErrInvalidParams) {
+			response.Fail(c, errcode.ErrInvalidParams)
+			return
+		} else {
+			response.Fail(c, errcode.ErrServer)
+			fmt.Println("❌ 注册失败:", err)
+			return
 		}
 	}
 	response.Success(c, gin.H{
-		"userid": user.StudentID,
-		"name":user.Name,
-		"id":user.ID,
+		"student_id": user.StudentID,
+		"name":       user.Name,
+		"id":         user.ID,
+		"role":       user.Role,
 	})
 
 }
@@ -49,7 +53,7 @@ func Login(c *gin.Context) {
 		response.FailReason(c, errcode.ErrInvalidParams, err.Error())
 		return
 	}
-	user1, err := service.LoginUser(b.Userid, b.Password)
+	user1, err := service.LoginUser(b.StudentID, b.Password)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			response.Fail(c, errcode.ErrBadCredentials)
@@ -80,36 +84,41 @@ func Login(c *gin.Context) {
 		"expires_in":         int(service.AccessTokenTTL.Seconds()),
 		"refresh_expires_in": int(service.RefreshTokenTTL.Seconds()),
 		"user": gin.H{
-			"id":       user1.ID,
-			"userid": user1.StudentID,
-			"role":     user1.Role,
-			"name": user1.Name,
+			"id":         user1.ID,
+			"student_id": user1.StudentID,
+			"role":       user1.Role,
+			"name":       user1.Name,
+			"avatar_url": user1.AvatarURL,
+			"theme":      user1.Theme,
 		},
 	})
 }
 
 func GetCurrentUser(c *gin.Context) {
 	userid := middleware.GetUserID(c)
-	user,err := service.GetUserProfile(userid)
-	if err != nil{
-		response.Fail(c,errcode.ErrServer)
+	user, err := service.GetUserProfile(userid)
+	if err != nil {
+		response.Fail(c, errcode.ErrServer)
 		return
 	}
-	response.Success(c,user)
+	response.Success(c, user)
 	return
-
 
 }
 
 func Logout(c *gin.Context) {
 	info := middleware.GetTokenInfo(c)
+	if info == nil {
+		response.Fail(c, errcode.ErrNoToken)
+		return
+	}
 	err := service.SessionCancel(info.SID)
 	if err != nil {
 		response.Fail(c, errcode.ErrServer)
 		fmt.Println("❌", err)
 		return
 	}
-	response.Success(c, "注销成功")
+	response.SuccessMsg(c, "已退出登录", nil)
 }
 
 func Refresh(c *gin.Context) {
@@ -153,6 +162,10 @@ func ChangePassword(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, service.ErrOldPasswordWrong) {
 			response.Fail(c, errcode.ErrOldPassword)
+			return
+		}
+		if errors.Is(err, service.ErrInvalidParams) {
+			response.Fail(c, errcode.ErrInvalidParams)
 			return
 		}
 		response.Fail(c, errcode.ErrServer)

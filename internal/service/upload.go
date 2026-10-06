@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"gin-demo/internal/model"
+	appconfig "gin-demo/pkg/config"
 	_ "golang.org/x/image/webp"
 	"image"
 	_ "image/jpeg"
@@ -48,7 +49,7 @@ func SavePhoto(fh *multipart.FileHeader, usage string) (*model.PhotoSize, error)
 		return &model.PhotoSize{}, ErrPhotoTooLarge
 	}
 
-	if err := os.MkdirAll("uploads", 0755); err != nil {
+	if err := os.MkdirAll(appconfig.UploadDir, 0755); err != nil {
 		return &model.PhotoSize{}, err
 	}
 	check, err := fh.Open()
@@ -77,7 +78,7 @@ func SavePhoto(fh *multipart.FileHeader, usage string) (*model.PhotoSize, error)
 		return &model.PhotoSize{}, err
 	}
 
-	f, err := os.Create(filepath.Join("uploads", photo))
+	f, err := os.Create(filepath.Join(appconfig.UploadDir, photo))
 	if err != nil {
 		return &model.PhotoSize{}, err
 	}

@@ -31,7 +31,7 @@ func initDB() {
 		    用户名    密码        分隔符      连接方式+地址:端口          数据库名              连接参数
 
 	*/
-	dsn := "root:123456@tcp(127.0.0.1:3306)/lost_found_db?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := config.DatabaseDSN
 
 	var err error
 	//连接数据库
@@ -59,8 +59,8 @@ func initDB() {
 }
 
 func main() {
-	if config.JWTSecret == "" {
-		panic("❌ 必须设置环境变量 JWT_SECRET(长度 ≥ 32 字节）")
+	if len(config.JWTSecret) < 32 {
+		panic("❌ 必须设置环境变量 JWT_SECRET（长度 ≥ 32 字节）")
 	}
 	// 4. 启动时先连数据库
 	initDB()
@@ -73,9 +73,15 @@ func main() {
 	r.Use(middleware.Logger())
 	//CORS()	跨域 —— 让前端（不同端口）能正常访问你的后端
 	r.Use(middleware.CORS())
+	r.GET("/healthz", func(c *gin.Context) {
+		c.JSON(200, gin.H{"ok": true})
+	})
 	router.RegisterRoutes(r)
-	//把项目里的 `./uploads` 文件夹，暴露成网址 `/uploads/...`
-	r.Static("/uploads", "./uploads")
+	r.Static("/uploads", config.UploadDir)
 
-	r.Run(":8000")
+	addr := config.HTTPPort
+	if addr != "" && addr[0] != ':' {
+		addr = ":" + addr
+	}
+	r.Run(addr)
 }

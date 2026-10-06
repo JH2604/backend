@@ -3,6 +3,7 @@ package router
 import (
 	"gin-demo/internal/handler"
 	"gin-demo/internal/middleware"
+	"gin-demo/pkg/validate"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -53,6 +54,12 @@ func init() {
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("notblank", func(fl validator.FieldLevel) bool {
 			return strings.TrimSpace(fl.Field().String()) != ""
+		})
+		v.RegisterValidation("password", func(fl validator.FieldLevel) bool {
+			return validate.Password(fl.Field().String())
+		})
+		v.RegisterValidation("studentid", func(fl validator.FieldLevel) bool {
+			return validate.StudentID(fl.Field().String())
 		})
 	}
 }

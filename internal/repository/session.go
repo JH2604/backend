@@ -46,11 +46,18 @@ func RevokeAllSessionsForUser(userID uint) error {
 	return db.Model(&model.Session{}).Where("user_id = ?", userID).Update("revoked_at", time.Now()).Error
 }
 
-func RotateTokens(id, oldRefreshHash, newAccessHash, newRefreshHash string) error {
+func RotateTokens(id, oldRefreshHash, newAccessHash, newRefreshHash string, accessExp, refreshExp time.Time) error {
 	return db.Model(&model.Session{}).Where("id = ?", id).Updates(map[string]interface{}{
 		"access_token_hash":  newAccessHash,
 		"refresh_token_hash": newRefreshHash,
 		"prev_refresh_hash":  oldRefreshHash,
+		"access_expires_at":  accessExp,
+		"refresh_expires_at": refreshExp,
+		"last_used_at":       time.Now(),
 	}).Error
+}
+
+func TouchLastUsed(id string) error {
+	return db.Model(&model.Session{}).Where("id = ?", id).Update("last_used_at", time.Now()).Error
 }
 

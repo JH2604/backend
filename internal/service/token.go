@@ -43,12 +43,18 @@ func createAccessToken(user *model.User, sid string) (string, error) {
 
 func ParseToken(tokenStr string) (*model.TokenInfo, error) {
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
+		if t.Method != jwt.SigningMethodHS256 {
+			return nil, ErrInvalidToken
+		}
 		return []byte(config.JWTSecret), nil
-	})
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 	if err != nil {
 		return nil, err
 	}
-	claims := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, ErrInvalidToken
+	}
 	rawUserID, ok1 := claims["sub"].(string)
 	if !ok1 {
 		return nil, ErrInvalidToken
@@ -143,6 +149,7 @@ func ValidateToken(tokenStr string) (*model.TokenInfo, error) {
 	if s.RevokedAt != nil {
 		return nil, ErrSessionInvalid
 	}
+	_ = repository.TouchLastUsed(s.ID)
 
 	return info, nil
 }
@@ -181,7 +188,7 @@ func RefreshTokens(refreshToken string) (access, refresh string, err error) {
 	if err != nil {
 		return "", "", err
 	}
-	err = repository.RotateTokens(s.ID, hash, sha256Hex(access), sha256Hex(refresh))
+	err = repository.RotateTokens(s.ID, hash, sha256Hex(access), sha256Hex(refresh), time.Now().Add(AccessTokenTTL), time.Now().Add(RefreshTokenTTL))
 	if err != nil {
 		return "", "", err
 	}

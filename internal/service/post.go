@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gin-demo/internal/model"
 	"gin-demo/internal/repository"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -15,6 +16,17 @@ var ErrNoPermission = errors.New("没有权限")
 var ErrOldPasswordWrong = errors.New("原密码错误")
 
 func CreatePost(userID uint, req model.CreatePostReq) (*model.Post, error) {
+	req.Title = strings.TrimSpace(req.Title)
+	req.Content = strings.TrimSpace(req.Content)
+	req.Location.Name = strings.TrimSpace(req.Location.Name)
+	if req.Title == "" || req.Content == "" || req.Location.Name == "" {
+		return nil, ErrInvalidParams
+	}
+	for _, u := range req.Images {
+		if !strings.HasPrefix(u, "/uploads/") {
+			return nil, ErrInvalidParams
+		}
+	}
 	p := &model.Post{
 		Type:      req.Type,
 		UserID:    userID,
@@ -32,6 +44,11 @@ func CreatePost(userID uint, req model.CreatePostReq) (*model.Post, error) {
 	p.IsMine = true
 	p.CanDelete = true
 	p.CanChangeStatus = true
+	author, err := repository.FindUserByID(userID)
+	if err == nil {
+		brief := toUserBrief(*author)
+		p.Author = &brief
+	}
 
 	return p, nil
 }
