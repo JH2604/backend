@@ -51,7 +51,7 @@ func initDB() {
 	}
 
 	// ⚠️ 关键：这里要改成 model.LostItem
-	err = db.AutoMigrate(&model.Post{}, &model.User{}, &model.Session{}, &model.Message{},&model.Student{})
+	err = db.AutoMigrate(&model.Post{}, &model.User{}, &model.Session{}, &model.Message{},&model.Student{},&model.VerificationCode{})
 	if err != nil {
 		panic("❌ 自动建表失败")
 	}
