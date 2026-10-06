@@ -47,6 +47,10 @@ func RegisterRoutes(r *gin.Engine) {
 		// ---- 改密码 ----
 		v1.PUT("/users/me/password", middleware.Auth(), handler.ChangePassword) // U3 改密码（成功后吊销全部会话，要重新登录）
 		v1.PATCH("/users/me", middleware.Auth(), handler.UpdateAvatar)
+
+		r.POST("/api/v1/verification-codes", handler.SendVerificationCode)
+		r.PUT("/api/v1/users/me/contact", middleware.Auth(), handler.BindContact)
+
 	}
 }
 
