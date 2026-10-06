@@ -1,5 +1,7 @@
 # 后端部署文档
 
+> 该文件保留原来的手工二进制部署流程。完整项目（前端 + 后端 + MySQL）的推荐 Docker Compose 方案见 `F:\2026精弘大作业文档部分\06-项目上云部署操作文档.md`。
+
 ## 一、服务器信息
 
 | 项 | 值 |
@@ -79,5 +81,5 @@ systemctl status lostfound      # 确认是 active (running)
 **在本地验证**：
 
 ```powershell
-curl.exe http://47.99.130.27:8000/api/v1/lost-items
+curl.exe http://47.99.130.27:8000/api/v1/posts
 ```

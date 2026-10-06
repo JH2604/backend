@@ -72,13 +72,8 @@ type Post struct {
 
 // PostLocation 地点对象（JSON 列）
 type PostLocation struct {
-	Name string `json:"name"`
-
-	//这个 omitempty 是告诉 Gin：“如果前端没传这个值，
-	// 或者它等于零值（0），就不要把它序列化到 JSON 里返回给我。”
-	//Latitude（纬度）
-	Latitude float64 `json:"latitude,omitempty"`
-	//Longitude（经度)
+	Name      string  `json:"name" binding:"required,notblank,max=100"`
+	Latitude  float64 `json:"latitude,omitempty"`
 	Longitude float64 `json:"longitude,omitempty"`
 }
 
@@ -132,7 +127,7 @@ type CreatePostReq struct {
 	Type      string       `json:"type" binding:"required,oneof=lost found"`
 	Title     string       `json:"title" binding:"required,notblank,max=30"`
 	Content   string       `json:"content" binding:"required,notblank,max=1000"`
-	Images    []string     `json:"images" binding:"omitempty,max=9"`
+	Images    []string     `json:"images" binding:"omitempty,max=9,dive,notblank"`
 	Location  PostLocation `json:"location" binding:"required"`
 	EventTime *time.Time   `json:"event_time"` // RFC3339
 }

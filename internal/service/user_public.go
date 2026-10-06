@@ -13,22 +13,20 @@ import (
 var ErrUserNotFound = errors.New("用户不存在")
 
 // ListAdmins U6 管理员列表
-func ListAdmins() ([]model.AdminBrief, error) {
+func ListAdmins(viewerID uint) ([]model.AdminBrief, error) {
 	users, err := repository.FindAdmins()
 	if err != nil {
 		return nil, err
 	}
-	// 用 make 而不是 var：空切片序列化成 []，nil 切片序列化成 null
 	list := make([]model.AdminBrief, 0, len(users))
 	for _, u := range users {
 		list = append(list, model.AdminBrief{
-			ID:        u.ID,
-			Name:      u.Name,
-			AvatarURL: u.AvatarURL,
-			Role:      u.Role,
-			Email:     u.Email,
-			// 系统目前没有「拉黑 / 禁止私信」这个概念，恒为 true；以后要做只改这一行
-			CanMessage: true,
+			ID:         u.ID,
+			Name:       u.Name,
+			AvatarURL:  u.AvatarURL,
+			Role:       u.Role,
+			Email:      u.Email,
+			CanMessage: u.ID != viewerID,
 		})
 	}
 	return list, nil
@@ -36,7 +34,7 @@ func ListAdmins() ([]model.AdminBrief, error) {
 
 // GetUserPublic U7 查看发帖人信息
 // viewerRole 是查看者的角色，来自 token（前端伪造不了），由它决定 detail 给不给
-func GetUserPublic(targetID uint, viewerRole string) (*model.UserPublic, error) {
+func GetUserPublic(targetID uint, viewerID uint, viewerRole string) (*model.UserPublic, error) {
 	user, err := repository.FindUserByID(targetID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -55,11 +53,9 @@ func GetUserPublic(targetID uint, viewerRole string) (*model.UserPublic, error) 
 		Name:      user.Name,
 		AvatarURL: user.AvatarURL,
 		Role:      user.Role,
-		PostCount: count,
-		// 同 U6：暂无黑名单，恒 true
-		CanMessage: true,
-		// 规则抽到 service/remind.go 的 canRemind()，和 M4 的 can_remind 共用一份
-		CanRemind: canRemind(user),
+		PostCount:  count,
+		CanMessage: targetID != viewerID,
+		CanRemind:  canRemind(user),
 	}
 
 	// 只有管理员才填 Detail；普通用户保持 nil → JSON 里就是 null

@@ -21,7 +21,12 @@ func Auth() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		token1 := header[7:]
+		token1 := strings.TrimSpace(header[7:])
+		if token1 == "" {
+			response.Fail(c, errcode.ErrNoToken)
+			c.Abort()
+			return
+		}
 		info, err := service.ValidateToken(token1)
 		if err != nil {
 			if errors.Is(err, service.ErrSessionInvalid) {
