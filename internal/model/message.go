@@ -73,7 +73,7 @@ type MessageListItem struct {
 
 // SendMessageReq M3 请求体（发送者由 token 确定）
 type SendMessageReq struct {
-	ReceiverID uint   `json:"receiver_id" binding:"required"`
+	ReceiverID uint   `json:"receiver_id" binding:"required,gt=0"`
 	Content    string `json:"content" binding:"required,notblank,max=1000"`
 	PostID     *uint  `json:"post_id"` // 指针区分"未传"与 0
 	Remind     bool   `json:"remind"`

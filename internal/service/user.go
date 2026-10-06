@@ -5,6 +5,7 @@ import (
 	"errors"
 	"gin-demo/internal/model"
 	"gin-demo/internal/repository"
+	"gin-demo/pkg/validate"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -18,9 +19,17 @@ var ErrSessionInvalid = errors.New("会话已失效")
 var ErrRefreshTokenInvalid = errors.New("刷新令牌无效")
 var ErrTokenExpired = errors.New("令牌已过期")
 var ErrStudentNotFound = errors.New("没找到学生")
+var ErrInvalidParams = errors.New("参数错误")
 
 func RegisterUser(studentID, password, role string) (*model.User, error) {
 	studentID = strings.TrimSpace(studentID)
+	role = strings.TrimSpace(role)
+	if !validate.StudentID(studentID) || !validate.Password(password) {
+		return nil, ErrInvalidParams
+	}
+	if role != model.RoleStudent && role != model.RoleAdmin {
+		return nil, ErrInvalidParams
+	}
 	student, err := repository.FindStudent(studentID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -70,6 +79,9 @@ func LoginUser(username, password string) (*model.User, error) {
 
 // 修改密码函数
 func ChangePassword(userID uint, old_password string, newpassword string) error {
+	if !validate.Password(newpassword) {
+		return ErrInvalidParams
+	}
 	user, err := repository.FindUserByID(userID)
 	if err != nil {
 		return err

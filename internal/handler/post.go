@@ -24,6 +24,10 @@ func CreatePost(c *gin.Context) {
 	}
 	post, err := service.CreatePost(userID, req)
 	if err != nil {
+		if errors.Is(err, service.ErrInvalidParams) {
+			response.Fail(c, errcode.ErrInvalidParams)
+			return
+		}
 		response.Fail(c, errcode.ErrServer)
 		fmt.Println("❌ 发帖失败:", err)
 		return
@@ -58,6 +62,10 @@ func GetPost(c *gin.Context) {
 		return
 	}
 	info := middleware.GetTokenInfo(c)
+	if info == nil {
+		response.Fail(c, errcode.ErrNoToken)
+		return
+	}
 	post, err := service.GetPost(uint(id), info.UserID, info.Role)
 	if err != nil {
 		if errors.Is(err, service.ErrPostNotFound) {
@@ -120,6 +128,10 @@ func DeletePost(c *gin.Context) {
 		return
 	}
 	info := middleware.GetTokenInfo(c)
+	if info == nil {
+		response.Fail(c, errcode.ErrNoToken)
+		return
+	}
 	var req model.DeletePostReq
 	if err := c.ShouldBindJSON(&req); err != nil && !errors.Is(err, io.EOF) {
 		response.FailReason(c, errcode.ErrInvalidParams, err.Error())

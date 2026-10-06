@@ -19,8 +19,15 @@ type Page struct {
 	PageSize int   `json:"page_size"`
 }
 
+func writeJSON(c *gin.Context, httpStatus int, body Response) {
+	if httpStatus == 401 {
+		c.Header("WWW-Authenticate", `Bearer error="invalid_token"`)
+	}
+	c.JSON(httpStatus, body)
+}
+
 func Success(c *gin.Context, data any) {
-	c.JSON(200, Response{
+	writeJSON(c, 200, Response{
 		Code: errcode.Success,
 		Msg:  errcode.GetMsg(errcode.Success),
 		Data: data,
@@ -28,7 +35,7 @@ func Success(c *gin.Context, data any) {
 }
 
 func SuccessCreated(c *gin.Context, data any) {
-	c.JSON(201, Response{
+	writeJSON(c, 201, Response{
 		Code: errcode.Success,
 		Msg:  errcode.GetMsg(errcode.Success),
 		Data: data,
@@ -36,7 +43,7 @@ func SuccessCreated(c *gin.Context, data any) {
 }
 
 func Fail(c *gin.Context, code int) {
-	c.JSON(code/100, Response{
+	writeJSON(c, code/100, Response{
 		Code: code,
 		Msg:  errcode.GetMsg(code),
 		Data: nil,
@@ -44,16 +51,16 @@ func Fail(c *gin.Context, code int) {
 }
 
 func FailReason(c *gin.Context, code int, reason string) {
-	c.JSON(code/100, Response{
+	writeJSON(c, code/100, Response{
 		Code: code,
 		Msg:  reason,
 		Data: nil,
 	})
 }
 
-func SuccessMsg(c *gin.Context,msg string,data any){
-	c.JSON(200,Response{
-		Msg : msg,
+func SuccessMsg(c *gin.Context, msg string, data any) {
+	writeJSON(c, 200, Response{
+		Msg:  msg,
 		Data: data,
 		Code: errcode.Success,
 	})
