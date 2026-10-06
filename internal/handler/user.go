@@ -36,7 +36,7 @@ func Register(c *gin.Context) {
 		}
 	}
 	response.Success(c, gin.H{
-		"userid": user.StudentID,
+		"student_id": user.StudentID,
 		"name":user.Name,
 		"id":user.ID,
 	})
@@ -81,7 +81,7 @@ func Login(c *gin.Context) {
 		"refresh_expires_in": int(service.RefreshTokenTTL.Seconds()),
 		"user": gin.H{
 			"id":       user1.ID,
-			"userid": user1.StudentID,
+			"student_id": user1.StudentID,
 			"role":     user1.Role,
 			"name": user1.Name,
 		},

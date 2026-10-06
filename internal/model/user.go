@@ -3,7 +3,7 @@ package model
 import "time"
 
 type RegisterReq struct {
-	StudentID string `json:"userid" binding:"max=20,min=3,required"`
+	StudentID string `json:"student_id" binding:"max=20,min=3,required"`
 	Password  string `json:"password" binding:"max=32,min=6,required"`
 	Role      string `json:"role" binding:"oneof=student admin,required"`
 }
@@ -33,7 +33,7 @@ type User struct {
 }
 
 type LoginReq struct {
-	Userid string `json:"userid" binding:"max=20,min=3,required"`
+	Userid string `json:"student_id" binding:"max=20,min=3,required"`
 	Password string `json:"password" binding:"max=32,min=6,required"`
 }
 
