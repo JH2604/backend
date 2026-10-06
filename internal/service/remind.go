@@ -8,7 +8,7 @@ import (
 	"gin-demo/internal/repository"
 )
 
-// M3 提醒的两条限流红线（文档原文）
+// M3 提醒的两条限流红线
 const (
 	remindPeerCooldown = 12 * time.Hour // 同一对用户 12 小时内只提醒 1 次
 	remindDailyLimit   = 5              // 每个接收人每天最多被提醒 5 次
@@ -66,7 +66,7 @@ func resolveRemind(senderID uint, receiver *model.User) model.RemindResult {
 	return model.RemindResult{Status: model.RemindStatusSent, Channel: channel}
 }
 
-// startOfToday 今天 0 点（本地时区），"每天 5 次"按自然日算
+// startOfToday 今天 0 点（本地时区）
 func startOfToday() time.Time {
 	now := time.Now()
 	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())

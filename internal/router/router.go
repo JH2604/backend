@@ -15,20 +15,17 @@ import (
 // 把"我是谁"塞进 context；后面 handler 里 middleware.GetUserID(c) 就是把它取出来。
 // 登录 / 注册 / 刷新令牌这三条【不能】加 —— 那时候用户还没登录，没有 token 可查。
 func RegisterRoutes(r *gin.Engine) {
-	// ========== 用户模块（队友「风尽起长歌」负责：A 系列 + U1 + F1）==========
-	// 这一块按队友原来的顺序排，整块归他；中间只有标了 ★ 的 U6/U7 是我写的，
-	// 验收时按这个分人问：没标的是队友的，★ 是我的
+	// ========== 用户模块 ==========
 	r.POST("/api/v1/auth/register", handler.Register)                         // A1 注册（学号去实名库换真名）
 	r.POST("/api/v1/auth/login", handler.Login)                               // A2 登录：发 access + refresh 双令牌
 	r.GET("/api/v1/users/me", middleware.Auth(), handler.GetCurrentUser)      // U1 当前登录用户的完整资料 + 帖子数
-	r.GET("/api/v1/users/admins", middleware.Auth(), handler.ListAdmins)      // ★ U6 我做的 · 联系管理员：管理员列表
-	r.GET("/api/v1/users/:user_id", middleware.Auth(), handler.GetUserPublic) // ★ U7 我做的 · 查看发帖人信息（手机号等 detail 只给管理员）
+	r.GET("/api/v1/users/admins", middleware.Auth(), handler.ListAdmins)      // U6 联系管理员：管理员列表
+	r.GET("/api/v1/users/:user_id", middleware.Auth(), handler.GetUserPublic) // U7 查看发帖人信息（手机号等 detail 只给管理员）
 	r.POST("/api/v1/auth/logout", middleware.Auth(), handler.Logout)          // A4 退出登录（吊销当前会话）
 	r.POST("/api/v1/files", middleware.Auth(), handler.UploadPhoto)           // F1 上传图片
 	r.POST("/api/v1/auth/refresh", handler.Refresh)                           // A3 刷新令牌（旧的刷新令牌一次性，用过就换新）
 
-	// ========== 失物招领模块（我负责：帖子 P / 私信 M / 改密码 U3）==========
-	// v1 是"路由组"：统一带上 /api/v1 前缀，所以组内路径不用再写一遍
+	// ========== 失物招领模块 ==========
 	v1 := r.Group("/api/v1")
 	{
 		// ---- 帖子 ----
@@ -46,7 +43,7 @@ func RegisterRoutes(r *gin.Engine) {
 		// M4 路径不能写成 /messages/:peer_id —— 会和 M1 的 /messages/unread-count 冲突，gin 启动即 panic
 		v1.GET("/messages/conversations/:peer_id", middleware.Auth(), handler.GetConversation) // M4 与某用户的私信记录（游标分页）
 
-		// ---- 改密码：功能属用户模块，但接口是我在这个组里实现的 ----
+		// ---- 改密码 ----
 		v1.PUT("/users/me/password", middleware.Auth(), handler.ChangePassword) // U3 改密码（成功后吊销全部会话，要重新登录）
 	}
 }

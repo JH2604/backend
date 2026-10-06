@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ListAdmins：U6 管理员列表（GET /users/admins）
+// ListAdmins U6 管理员列表 GET /users/admins
 func ListAdmins(c *gin.Context) {
 	list, err := service.ListAdmins()
 	if err != nil {
@@ -25,19 +25,16 @@ func ListAdmins(c *gin.Context) {
 	response.Success(c, list)
 }
 
-// GetUserPublic：U7 查看发帖人信息（GET /users/{user_id}）
+// GetUserPublic U7 查看发帖人信息 GET /users/{user_id}
 func GetUserPublic(c *gin.Context) {
-	// ① 路径参数拿到的永远是字符串，先转成数字；
-	//    转不动、或者传了 0，都算参数错误
-	//__`10`__ = 十进制（不是十六进制），__`64`__ = 最长 64 位（超了就报错）
+	// 路径参数拿到的是字符串，先转数字；转不动或传了 0 都算参数错误
 	id, err := strconv.ParseUint(c.Param("user_id"), 10, 64)
 	if err != nil || id == 0 {
 		response.Fail(c, errcode.ErrInvalidParams)
 		return
 	}
 
-	// ②「查看者是谁、什么角色」必须从 token 拿 ——
-	//    这是「按角色裁剪字段」能成立的前提，前端说了不算
+	// 查看者是谁、什么角色必须从 token 拿 —— 按角色裁剪字段的前提，前端说了不算
 	viewer := middleware.GetTokenInfo(c)
 	role := ""
 	if viewer != nil {
