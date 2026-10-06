@@ -109,15 +109,26 @@ func ChangePassword(userID uint, old_password string, newpassword string) error 
 	return nil
 }
 
-func GetUserProfile(userID uint)(*model.User,error){
-	user,err := repository.FindUserByID(userID)
-	if err != nil{
-		return nil,err
+func GetUserProfile(userID uint) (*model.User, error) {
+	user, err := repository.FindUserByID(userID)
+	if err != nil {
+		return nil, err
 	}
-	count,err := repository.CountPost(userID)
-	if err != nil{
-		return nil,err
+	count, err := repository.CountPost(userID)
+	if err != nil {
+		return nil, err
 	}
 	user.PostCount = count
-	return user,nil
+	return user, nil
+}
+
+func UpdateAvatar(userID uint, avatarURL string) (*model.User, error) {
+	avatarURL = strings.TrimSpace(avatarURL)
+	if !strings.HasPrefix(avatarURL, "/uploads/") {
+		return nil, ErrInvalidParams
+	}
+	if err := repository.UpdateAvatar(userID, avatarURL); err != nil {
+		return nil, err
+	}
+	return GetUserProfile(userID)
 }

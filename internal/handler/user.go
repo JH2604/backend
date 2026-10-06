@@ -175,3 +175,21 @@ func ChangePassword(c *gin.Context) {
 	response.SuccessMsg(c, "密码已修改，请重新登陆", nil)
 
 }
+
+func UpdateAvatar(c *gin.Context) {
+	var req model.UpdateAvatarReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, errcode.ErrInvalidParams)
+		return
+	}
+	user, err := service.UpdateAvatar(middleware.GetUserID(c), req.AvatarURL)
+	if err != nil {
+		if errors.Is(err, service.ErrInvalidParams) {
+			response.Fail(c, errcode.ErrInvalidParams)
+			return
+		}
+		response.Fail(c, errcode.ErrServer)
+		return
+	}
+	response.Success(c, user)
+}

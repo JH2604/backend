@@ -5,10 +5,14 @@ import (
 	"gin-demo/internal/model"
 )
 
+func UpdateAvatar(userID uint, avatarURL string) error {
+	return db.Model(&model.User{}).Where("id=?", userID).Update("avatar_url", avatarURL).Error
+}
 func CreateUser(v *model.User) error {
 	return db.Create(v).Error
 
 }
+
 func FindByStudentID(username string) (model.User, error) {
 	var user model.User
 	err := db.Where("student_id = ?", username).First(&user).Error
