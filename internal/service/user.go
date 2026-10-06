@@ -20,6 +20,9 @@ var ErrRefreshTokenInvalid = errors.New("刷新令牌无效")
 var ErrTokenExpired = errors.New("令牌已过期")
 var ErrStudentNotFound = errors.New("没找到学生")
 var ErrInvalidParams = errors.New("参数错误")
+var ErrCodeInvalid = errors.New("验证码错误或过期")
+var ErrContactTaken = errors.New("邮箱已被其他账号绑定")
+
 
 func RegisterUser(studentID, password, role string) (*model.User, error) {
 	studentID = strings.TrimSpace(studentID)

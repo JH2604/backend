@@ -52,24 +52,24 @@ func SendVerificationCode(target, scene string) error {
 	return nil
 }
 
-func BindContact(userID uint, target,scene, code string) error {
+func BindContact(userID uint, target, scene, code string) error {
 	target1, err := repository.FindValidCode(target, scene)
-	if err != nil{
-		return	ErrCodeInvalid
-	}
-	if target1.Code != code{
+	if err != nil {
 		return ErrCodeInvalid
 	}
-	u,err := repository.FindByemail(target)
-	if err == nil && u.ID != userID {
-    	return ErrContactTaken        // 别人绑了
+	if target1.Code != code {
+		return ErrCodeInvalid
 	}
-	err = repository.UpdateEmail(userID,target)
-	if err != nil{
+	u, err := repository.FindByemail(target)
+	if err == nil && u.ID != userID {
+		return ErrContactTaken // 别人绑了
+	}
+	err = repository.UpdateEmail(userID, target)
+	if err != nil {
 		return err
 	}
 	err = repository.MarkCodeUsed(target1.ID)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	return nil
