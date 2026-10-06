@@ -18,6 +18,8 @@ var ErrSessionInvalid = errors.New("会话已失效")
 var ErrRefreshTokenInvalid = errors.New("刷新令牌无效")
 var ErrTokenExpired = errors.New("令牌已过期")
 var ErrStudentNotFound = errors.New("没找到学生")
+var ErrCodeInvalid = errors.New("查不到")
+var ErrContactTaken = errors.New("code比对不一样")
 
 func RegisterUser(studentID, password, role string) (*model.User, error) {
 	studentID = strings.TrimSpace(studentID)

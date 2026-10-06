@@ -168,15 +168,18 @@ func RefreshTokens(refreshToken string) (access, refresh string, err error) {
 	if s.RevokedAt != nil || time.Now().After(s.RefreshExpiresAt) {
 		return "", "", ErrRefreshTokenInvalid
 	}
+
 	refreshTokenHash, err := randomBytes(32)
 	if err != nil {
 		return "", "", err
 	}
 	refresh = base64.RawURLEncoding.EncodeToString(refreshTokenHash)
+	
 	user, err := repository.FindUserByID(s.UserID)
 	if err != nil {
 		return "", "", err
 	}
+
 	access, err = createAccessToken(user, s.ID)
 	if err != nil {
 		return "", "", err

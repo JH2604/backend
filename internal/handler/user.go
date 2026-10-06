@@ -96,7 +96,6 @@ func GetCurrentUser(c *gin.Context) {
 		return
 	}
 	response.Success(c,user)
-	return
 
 
 }
