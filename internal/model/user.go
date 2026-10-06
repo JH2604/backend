@@ -7,6 +7,9 @@ type RegisterReq struct {
 	Password  string `json:"password" binding:"required,password"`
 	Role      string `json:"role" binding:"required,oneof=student admin"`
 }
+type UpdateAvatarReq struct {
+	AvatarURL string `json:"avatar_url" binding:"required"`
+}
 
 const (
 	RoleStudent = "student"
