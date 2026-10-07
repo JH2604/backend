@@ -31,6 +31,10 @@ func SendVerificationCode(c *gin.Context) {
 			response.Fail(c, errcode.ErrTooManyRequests)
 			return
 		}
+		// 一定要把真实错误打出来：否则前端只看到 50000，
+		// 到底是 SMTP 认证失败、连不上、还是数据库出错，完全无从查起
+		fmt.Println("❌ 发送验证码失败:", err)
+		// 注意：这里【不能】把 err 返回给客户端 —— 内部错误细节会泄露服务器信息
 		response.Fail(c, errcode.ErrServer)
 		return
 	}

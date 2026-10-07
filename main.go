@@ -5,6 +5,7 @@ import (
 	"time"
 
 	//gin-demo为模块名,gin-demo 的根目录 = /Users/lovyy/Documents/backend/
+	"gin-demo/internal/mail"
 	"gin-demo/internal/middleware"
 	"gin-demo/internal/repository"
 	"gin-demo/internal/router"
@@ -64,6 +65,18 @@ func main() {
 	}
 	// 4. 启动时先连数据库
 	initDB()
+
+	// 5. 装配邮件发送器
+	// mail.Default 的默认值是 mail.go 里的 logSender（只把验证码打印到日志）。
+	// 配了 SMTP 环境变量就换成真发信的 smtpSender —— 只换这一个变量，
+	// service 层那行 mail.Default.SendVerificationCode(...) 一个字都不用动。
+	// 全部用 && 而不是 ||：缺任何一项都说明没配全，宁可退回打印版，也不要发一半卡住。
+	if config.SMTPHost != "" && config.SMTPUser != "" && config.SMTPPass != "" {
+		mail.Default = mail.NewSMTPSender(config.SMTPHost, config.SMTPPort, config.SMTPUser, config.SMTPPass)
+		fmt.Printf("✅ SMTP 已启用：%s:%s（验证码将真实发送）\n", config.SMTPHost, config.SMTPPort)
+	} else {
+		fmt.Println("⚠️  未配置 SMTP（SMTP_HOST / SMTP_USER / SMTP_PASS），验证码只打印在日志里，不会真发信")
+	}
 
 	//__创建一个 Gin 引擎__，名字叫 `r`。它就是你的"服务器本体"，负责接收和处理所有 HTTP 请求。
 	r := gin.New()
